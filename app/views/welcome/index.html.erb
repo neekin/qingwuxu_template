@@ -1,0 +1,50 @@
+<% content_for :title, "青乌序 · 前台（Turbo 演示）" %>
+
+<div class="max-w-3xl mx-auto px-5 py-10">
+  <header class="mb-8">
+    <h1 class="text-3xl font-bold text-[#1B6E78]">青乌序 · 前台</h1>
+    <p class="text-gray-500 mt-1">Rails + Hotwire（Turbo）演示页</p>
+  </header>
+
+  <!-- ① Turbo Drive -->
+  <section class="mb-8 rounded-lg border border-gray-200 p-5">
+    <h2 class="text-lg font-semibold mb-2">① Turbo Drive（无刷新导航）</h2>
+    <p class="text-gray-600 text-sm mb-3">
+      普通链接由 Turbo 拦截，走 <code>fetch</code> 局部替换，整页不刷新。点下面按钮观察地址栏变化但页面不闪。
+    </p>
+    <%= link_to "重新加载首页（Turbo Drive）", root_path,
+          class: "inline-block px-4 py-2 bg-[#1B6E78] text-white rounded hover:opacity-90" %>
+  </section>
+
+  <!-- ② Turbo Frames -->
+  <section class="mb-8 rounded-lg border border-gray-200 p-5">
+    <h2 class="text-lg font-semibold mb-2">② Turbo Frames（局部加载 / 更新）</h2>
+    <p class="text-gray-600 text-sm mb-3">
+      下方 Frame 通过 <code>src</code> 懒加载服务端时间；点击"刷新"只重载该 Frame，不影响整页。
+    </p>
+    <%= turbo_frame_tag "clock", src: clock_path, class: "block" do %>
+      <span class="text-gray-400 text-sm">加载中…</span>
+    <% end %>
+  </section>
+
+  <!-- ③ Turbo Streams -->
+  <section class="mb-8 rounded-lg border border-gray-200 p-5">
+    <h2 class="text-lg font-semibold mb-2">③ Turbo Streams（服务端推送 DOM 变更）</h2>
+    <p class="text-gray-600 text-sm mb-3">
+      提交表单后，服务端返回 <code>turbo-stream</code> 指令把新留言 <code>append</code> 到列表，无需手写一行 JS。
+    </p>
+    <%= render "message_form" %>
+    <ul id="messages" class="space-y-2 text-sm"></ul>
+  </section>
+
+  <!-- 跨布局链接（R1 红线演示） -->
+  <section class="rounded-lg border border-[#1B6E78]/30 bg-[#1B6E78]/5 p-5">
+    <h2 class="text-lg font-semibold mb-2 text-[#1B6E78]">进入后台（Inertia / React）</h2>
+    <p class="text-gray-600 text-sm mb-3">
+      跨布局跳转必须带 <code>data-turbo="false"</code>，否则 Turbo 会与 Inertia 的 history 冲突（R1 红线）。
+    </p>
+    <%= link_to "打开后台 Dashboard →", admin_root_path,
+          data: { turbo: false },
+          class: "inline-block px-4 py-2 border border-[#1B6E78] text-[#1B6E78] rounded hover:bg-[#1B6E78] hover:text-white" %>
+  </section>
+</div>

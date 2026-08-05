@@ -1,0 +1,5 @@
+<%= form_with url: messages_path, method: :post, id: "message-form", class: "flex gap-2 mb-4" do %>
+  <%= text_field_tag :message, nil, placeholder: "说点什么…",
+        class: "flex-1 border border-gray-300 rounded px-3 py-2 text-sm", required: true %>
+  <%= submit_tag "发送", class: "px-4 py-2 bg-[#BF8430] text-white rounded hover:opacity-90" %>
+<% end %>

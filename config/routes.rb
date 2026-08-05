@@ -4,6 +4,11 @@ Rails.application.routes.draw do
   constraints(host: "127.0.0.1") do
     get "(*path)", to: redirect { |params, req| "#{req.protocol}localhost:#{req.port}/#{params[:path]}" }
   end
+  # 前台（Turbo 演示）
+  root "welcome#index"
+  get "welcome/clock", to: "welcome#clock", as: :clock
+  post "welcome/messages", to: "welcome#messages", as: :messages
+
   namespace :admin do
     root 'inertia_example#index'
     get 'inertia-example', to: 'inertia_example#index'
