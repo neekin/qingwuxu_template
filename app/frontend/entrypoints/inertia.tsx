@@ -1,6 +1,6 @@
 import { createInertiaApp } from '@inertiajs/react'
 import { createRoot } from 'react-dom/client'
-import { ConfigProvider } from 'antd'
+import { App as AntdApp, ConfigProvider } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 
 // 关键：Vite 不支持 `import(`../pages/${name}.tsx`)` 这种多层路径的变量动态导入
@@ -23,13 +23,16 @@ void createInertiaApp({
   },
 
   // 用 antd ConfigProvider 注入设计系统主题（主色黛青 #1B6E78、圆角 6、中文语言包）
-  setup({ el, App, props }) {
+  // 用 antd <App> 包裹，启用 message/notification/modal 静态方法并继承主题上下文
+  setup({ el, App: InertiaApp, props }) {
     createRoot(el).render(
       <ConfigProvider
         locale={zhCN}
-        theme={{ token: { colorPrimary: '#1B6E78', borderRadius: 6 } }}
+        theme={{ cssVar: true, token: { colorPrimary: '#1B6E78', borderRadius: 6 } }}
       >
-        <App {...props} />
+        <AntdApp>
+          <InertiaApp {...props} />
+        </AntdApp>
       </ConfigProvider>,
     )
   },
