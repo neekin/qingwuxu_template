@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+/* 青乌序品牌色板 —— 与后台设计令牌（tokens.ts）单向对齐
+   黛青 = 主色，赭石 = 强调，墨色 = 中性灰阶；圆角统一 6px（rounded-md）。 */
+@theme {
+  --color-primary: #1B6E78;
+  --color-primary-600: #15565e;
+  --color-primary-700: #11454b;
+  --color-accent: #BF8430;
+  --color-accent-600: #a66f25;
+  --color-ink-50: #f6f8f8;
+  --color-ink-100: #eef2f2;
+  --color-ink-200: #d7e0e0;
+  --color-ink-300: #b3c2c4;
+  --color-ink-400: #8a9b9e;
+  --color-ink-500: #6b7d80;
+  --color-ink-600: #517075;
+  --color-ink-700: #34454a;
+  --color-ink-800: #1f2a2d;
+  --color-ink-900: #162024;
+}

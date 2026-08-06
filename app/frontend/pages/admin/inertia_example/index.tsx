@@ -1,21 +1,9 @@
 import { Head } from '@inertiajs/react'
 import { useState } from 'react'
-import "antd/dist/reset.css";
-import {
-  Layout,
-  Card,
-  Statistic,
-  Button,
-  Input,
-  Tabs,
-  Typography,
-  Divider,
-  Space,
-  Tag,
-} from 'antd'
+import AdminLayout from '../../../layouts/AdminLayout'
+import { Card, Statistic, Button, Input, Tabs, Typography, Divider, Space } from 'antd'
 
-const { Header, Content } = Layout
-const { Title, Paragraph, Text } = Typography
+const { Paragraph, Text } = Typography
 
 type Props = {
   rails_version: string
@@ -24,9 +12,7 @@ type Props = {
   inertia_rails_version: string
 }
 
-// 后台演示页：集中展示 Inertia + React 的能力
-//  - 服务端（Rails）通过 Inertia props 注入数据，React 仅做声明式渲染
-//  - 用 antd 组件做界面，用 useState 做客户端交互
+// 后台演示页：集中展示 Inertia + React 的能力（已纳入统一 AdminLayout 壳）
 export default function InertiaExample({
   rails_version,
   ruby_version,
@@ -45,17 +31,9 @@ export default function InertiaExample({
   }
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <AdminLayout>
       <Head title="后台 · Inertia + React 演示" />
-      <Header style={{ display: 'flex', alignItems: 'center', background: '#1B6E78' }}>
-        <Title level={3} style={{ color: '#fff', margin: 0 }}>
-          青乌序 后台
-        </Title>
-        <Tag color="cyan" style={{ marginLeft: 12 }}>
-          Inertia + React
-        </Tag>
-      </Header>
-      <Content style={{ padding: 24, maxWidth: 960, width: '100%', margin: '0 auto' }}>
+      <div style={{ maxWidth: 960, width: '100%', margin: '0 auto' }}>
         <Tabs
           defaultActiveKey="1"
           items={[
@@ -134,7 +112,7 @@ export default function InertiaExample({
             },
           ]}
         />
-      </Content>
-    </Layout>
+      </div>
+    </AdminLayout>
   )
 }

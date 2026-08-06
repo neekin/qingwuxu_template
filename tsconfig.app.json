@@ -29,5 +29,5 @@
       "~/*": ["./app/javascript/*"]
     }
   },
-  "include": ["app/javascript"]
+  "include": ["app/frontend", "app/javascript"]
 }

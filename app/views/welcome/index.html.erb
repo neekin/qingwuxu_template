@@ -1,50 +1,243 @@
-<% content_for :title, "青乌序 · 前台（Turbo 演示）" %>
+<% content_for :title, "青乌序 · 为后台勘一方秩序" %>
 
-<div class="max-w-3xl mx-auto px-5 py-10">
-  <header class="mb-8">
-    <h1 class="text-3xl font-bold text-[#1B6E78]">青乌序 · 前台</h1>
-    <p class="text-gray-500 mt-1">Rails + Hotwire（Turbo）演示页</p>
-  </header>
+<%# ============ 顶部导航 ============ %>
+<header class="sticky top-0 z-50 border-b border-white/10 bg-primary-700/95 backdrop-blur supports-[backdrop-filter]:bg-primary-700/80">
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+    <a href="<%= root_path %>" class="flex items-center gap-2 text-white">
+      <span class="grid h-8 w-8 place-items-center rounded-md bg-accent text-sm font-bold">青</span>
+      <span class="text-lg font-semibold tracking-wide">青乌序</span>
+    </a>
+    <nav class="hidden items-center gap-8 text-sm text-white/80 md:flex">
+      <a href="#features" class="transition hover:text-white">六法立序</a>
+      <a href="#architecture" class="transition hover:text-white">两脉并行</a>
+      <a href="#demo" class="transition hover:text-white">技术演示</a>
+      <a href="https://github.com" class="transition hover:text-white" target="_blank" rel="noopener">文档</a>
+    </nav>
+    <%= link_to "进入后台 →", admin_login_path, data: { turbo: false },
+          class: "rounded-md bg-white px-4 py-2 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-ink-50" %>
+  </div>
+</header>
 
-  <!-- ① Turbo Drive -->
-  <section class="mb-8 rounded-lg border border-gray-200 p-5">
-    <h2 class="text-lg font-semibold mb-2">① Turbo Drive（无刷新导航）</h2>
-    <p class="text-gray-600 text-sm mb-3">
-      普通链接由 Turbo 拦截，走 <code>fetch</code> 局部替换，整页不刷新。点下面按钮观察地址栏变化但页面不闪。
+<%# ============ Hero ============ %>
+<section class="relative overflow-hidden bg-gradient-to-br from-primary via-primary-600 to-primary-700 text-white">
+  <%# 装饰：网格 + 光斑 %>
+  <svg class="pointer-events-none absolute inset-0 h-full w-full opacity-[0.12]" aria-hidden="true">
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M40 0H0V40" fill="none" stroke="white" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#grid)"/>
+  </svg>
+  <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-accent/30 blur-3xl"></div>
+  <div class="pointer-events-none absolute -bottom-32 left-10 h-80 w-80 rounded-full bg-white/10 blur-3xl"></div>
+
+  <div class="relative mx-auto max-w-6xl px-6 py-24 lg:py-32">
+    <span class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm text-white/90">
+      <span class="h-2 w-2 rounded-full bg-accent"></span>
+      开源 · Rails 8 · 企业级二开框架
+    </span>
+    <h1 class="mt-6 max-w-3xl text-4xl font-bold leading-tight tracking-tight lg:text-6xl">
+      于混沌处立序，<br class="hidden lg:block" />为后台勘一方秩序。
+    </h1>
+    <p class="mt-6 max-w-2xl text-lg text-white/80">
+      青乌序，古之堪舆奇书，善辨山川脉络、裁穴有定。今以此为名，做你后台的国师——
+      以 RBAC 为经、代码生成为纬、设计系统为皮，开箱即成序。
+      前台 Hotwire 利 SEO，后台 Inertia + React + Ant Design Pro，两套栈互不夺气。
     </p>
-    <%= link_to "重新加载首页（Turbo Drive）", root_path,
-          class: "inline-block px-4 py-2 bg-[#1B6E78] text-white rounded hover:opacity-90" %>
-  </section>
+    <div class="mt-9 flex flex-wrap items-center gap-4">
+      <%= link_to "进入后台 Dashboard", admin_login_path, data: { turbo: false },
+            class: "rounded-md bg-white px-6 py-3 text-base font-semibold text-primary-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-ink-50" %>
+      <a href="#demo" class="rounded-md border border-white/30 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10">
+        查看技术演示
+      </a>
+    </div>
 
-  <!-- ② Turbo Frames -->
-  <section class="mb-8 rounded-lg border border-gray-200 p-5">
-    <h2 class="text-lg font-semibold mb-2">② Turbo Frames（局部加载 / 更新）</h2>
-    <p class="text-gray-600 text-sm mb-3">
-      下方 Frame 通过 <code>src</code> 懒加载服务端时间；点击"刷新"只重载该 Frame，不影响整页。
-    </p>
-    <%= turbo_frame_tag "clock", src: clock_path, class: "block" do %>
-      <span class="text-gray-400 text-sm">加载中…</span>
-    <% end %>
-  </section>
+    <%# 数据条 %>
+    <dl class="mt-16 grid max-w-3xl grid-cols-2 gap-8 border-t border-white/15 pt-10 sm:grid-cols-4">
+      <div>
+        <dt class="text-sm text-white/70">核心模块</dt>
+        <dd class="mt-1 text-3xl font-bold">6<span class="text-lg"> +</span></dd>
+      </div>
+      <div>
+        <dt class="text-sm text-white/70">权限模型</dt>
+        <dd class="mt-1 text-3xl font-bold">3<span class="text-lg"> 层</span></dd>
+      </div>
+      <div>
+        <dt class="text-sm text-white/70">前端栈</dt>
+        <dd class="mt-1 text-3xl font-bold">2<span class="text-lg"> 套</span></dd>
+      </div>
+      <div>
+        <dt class="text-sm text-white/70">生成器</dt>
+        <dd class="mt-1 text-3xl font-bold">0<span class="text-lg"> 配置</span></dd>
+      </div>
+    </dl>
+  </div>
+</section>
 
-  <!-- ③ Turbo Streams -->
-  <section class="mb-8 rounded-lg border border-gray-200 p-5">
-    <h2 class="text-lg font-semibold mb-2">③ Turbo Streams（服务端推送 DOM 变更）</h2>
-    <p class="text-gray-600 text-sm mb-3">
-      提交表单后，服务端返回 <code>turbo-stream</code> 指令把新留言 <code>append</code> 到列表，无需手写一行 JS。
-    </p>
-    <%= render "message_form" %>
-    <ul id="messages" class="space-y-2 text-sm"></ul>
-  </section>
+<%# ============ 核心特性 ============ %>
+<section id="features" class="mx-auto max-w-6xl px-6 py-20">
+  <div class="max-w-2xl">
+    <h2 class="text-3xl font-bold tracking-tight text-ink-900">六法立序</h2>
+    <p class="mt-3 text-ink-700">以 RBAC 为经、代码生成为纬、设计系统为皮，于混沌处立一方后台秩序。</p>
+  </div>
 
-  <!-- 跨布局链接（R1 红线演示） -->
-  <section class="rounded-lg border border-[#1B6E78]/30 bg-[#1B6E78]/5 p-5">
-    <h2 class="text-lg font-semibold mb-2 text-[#1B6E78]">进入后台（Inertia / React）</h2>
-    <p class="text-gray-600 text-sm mb-3">
-      跨布局跳转必须带 <code>data-turbo="false"</code>，否则 Turbo 会与 Inertia 的 history 冲突（R1 红线）。
-    </p>
-    <%= link_to "打开后台 Dashboard →", admin_root_path,
-          data: { turbo: false },
-          class: "inline-block px-4 py-2 border border-[#1B6E78] text-[#1B6E78] rounded hover:bg-[#1B6E78] hover:text-white" %>
-  </section>
-</div>
+  <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <%# 卡片 1 %>
+    <div class="rounded-md border border-ink-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+      <div class="grid h-11 w-11 place-items-center rounded-md bg-primary/10 text-primary">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 4v5c0 4.5-3.2 7.7-8 9-4.8-1.3-8-4.5-8-9V7l8-4z" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 class="mt-4 text-lg font-semibold text-ink-900">RBAC 权限模型</h3>
+      <p class="mt-2 text-sm text-ink-700">ActionPolicy 唯一授权，资源/角色/用户三层边界，最小授权单元是权限点——辨清谁可入此门。</p>
+    </div>
+
+    <%# 卡片 2 %>
+    <div class="rounded-md border border-ink-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+      <div class="grid h-11 w-11 place-items-center rounded-md bg-accent/10 text-accent">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13 6l-2 12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 class="mt-4 text-lg font-semibold text-ink-900">代码生成器</h3>
+      <p class="mt-2 text-sm text-ink-700">schema 一推，满盘落子成局。后台 CRUD 与前后台模板一键产出，省去样板搬运。</p>
+    </div>
+
+    <%# 卡片 3 %>
+    <div class="rounded-md border border-ink-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+      <div class="grid h-11 w-11 place-items-center rounded-md bg-primary/10 text-primary">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 14h5" stroke-linecap="round"/></svg>
+      </div>
+      <h3 class="mt-4 text-lg font-semibold text-ink-900">双日志审计</h3>
+      <p class="mt-2 text-sm text-ink-700">操作日志与登录日志开箱即用，行迹留痕、出入皆有据，满足企业合规与排障。</p>
+    </div>
+
+    <%# 卡片 4 %>
+    <div class="rounded-md border border-ink-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+      <div class="grid h-11 w-11 place-items-center rounded-md bg-accent/10 text-accent">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h10" stroke-linecap="round"/><circle cx="19" cy="17" r="2.2"/></svg>
+      </div>
+      <h3 class="mt-4 text-lg font-semibold text-ink-900">统一设计系统</h3>
+      <p class="mt-2 text-sm text-ink-700">黛青 / 赭石 / 墨色令牌单一来源，前后台圆角、聚焦环、语义色一致——皮相端庄，自有章法。</p>
+    </div>
+
+    <%# 卡片 5 %>
+    <div class="rounded-md border border-ink-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+      <div class="grid h-11 w-11 place-items-center rounded-md bg-primary/10 text-primary">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M3 12h18" stroke-linecap="round"/><circle cx="12" cy="12" r="9"/></svg>
+      </div>
+      <h3 class="mt-4 text-lg font-semibold text-ink-900">双布局隔离</h3>
+      <p class="mt-2 text-sm text-ink-700">前台 importmap + Tailwind，后台 Vite + Ant Design，bundle 严格分离——前后分野，两脉各行其道。</p>
+    </div>
+
+    <%# 卡片 6 %>
+    <div class="rounded-md border border-ink-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+      <div class="grid h-11 w-11 place-items-center rounded-md bg-accent/10 text-accent">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 class="mt-4 text-lg font-semibold text-ink-900">SSR 利 SEO</h3>
+      <p class="mt-2 text-sm text-ink-700">前台 Hotwire 服务端渲染，内容直出、首屏更快——如门庭洞开，利于收录。</p>
+    </div>
+  </div>
+</section>
+
+<%# ============ 双栈架构 ============ %>
+<section id="architecture" class="bg-ink-100/60 py-20">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="max-w-2xl">
+      <h2 class="text-3xl font-bold tracking-tight text-ink-900">两脉并行，互不夺气</h2>
+      <p class="mt-3 text-ink-700">前台如明堂开阔利纳气，后台如内室精微利用事，两脉各行其道，互不污染首屏。</p>
+    </div>
+
+    <div class="mt-12 grid gap-6 lg:grid-cols-2">
+      <div class="rounded-md border border-ink-100 bg-white p-8">
+        <div class="flex items-center gap-3">
+          <span class="rounded-md bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">前台 · C 端</span>
+        </div>
+        <h3 class="mt-4 text-xl font-semibold text-ink-900">Hotwire（Turbo / Stimulus）</h3>
+        <p class="mt-2 text-sm text-ink-700">服务端渲染，HTML 直出。Turbo Drive 无刷新导航、Turbo Frames 局部加载、Turbo Streams 服务端推送 DOM。</p>
+        <ul class="mt-4 space-y-2 text-sm text-ink-700">
+          <li class="flex gap-2"><span class="text-accent">›</span> importmap 加载，零构建步骤</li>
+          <li class="flex gap-2"><span class="text-accent">›</span> Tailwind CSS 原子化样式</li>
+          <li class="flex gap-2"><span class="text-accent">›</span> 首屏快、利于搜索引擎收录</li>
+        </ul>
+      </div>
+
+      <div class="rounded-md border border-ink-100 bg-white p-8">
+        <div class="flex items-center gap-3">
+          <span class="rounded-md bg-accent/10 px-3 py-1 text-sm font-semibold text-accent">后台 · 管理端</span>
+        </div>
+        <h3 class="mt-4 text-xl font-semibold text-ink-900">Inertia.js + React + Ant Design</h3>
+        <p class="mt-2 text-sm text-ink-700">Vite 打包的重交互栈。Ant Design Pro 组件库 + 墨色深侧栏，复杂表单与数据表格开箱即用。</p>
+        <ul class="mt-4 space-y-2 text-sm text-ink-700">
+          <li class="flex gap-2"><span class="text-primary">›</span> Vite 构建，按需打包</li>
+          <li class="flex gap-2"><span class="text-primary">›</span> ProTable / ProCard 高密度布局</li>
+          <li class="flex gap-2"><span class="text-primary">›</span> 与前台 bundle 严格隔离（R1 / R6）</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%# ============ Turbo 技术演示（保留原三大特性） ============ %>
+<section id="demo" class="mx-auto max-w-6xl px-6 py-20">
+  <div class="max-w-2xl">
+    <h2 class="text-3xl font-bold tracking-tight text-ink-900">术法虽微，皆由服务端驱动</h2>
+    <p class="mt-3 text-ink-700">后台用 Inertia，前台用 Hotwire——下面三个交互全部由服务端驱动，无需手写一行 JS。</p>
+  </div>
+
+  <div class="mt-12 grid gap-6 lg:grid-cols-3">
+    <%# ① Turbo Drive %>
+    <div class="rounded-md border border-ink-100 bg-white p-6">
+      <h3 class="text-base font-semibold text-ink-900">① Turbo Drive</h3>
+      <p class="mt-2 text-sm text-ink-700">普通链接由 Turbo 拦截，走 fetch 局部替换，整页不刷新。点按钮观察地址栏变化但页面不闪。</p>
+      <%= link_to "重新加载首页（Turbo Drive）", root_path,
+            class: "mt-4 inline-block rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-600" %>
+    </div>
+
+    <%# ② Turbo Frames %>
+    <div class="rounded-md border border-ink-100 bg-white p-6">
+      <h3 class="text-base font-semibold text-ink-900">② Turbo Frames</h3>
+      <p class="mt-2 text-sm text-ink-700">下方 Frame 通过 src 懒加载服务端时间；点「刷新」只重载该 Frame，不影响整页。</p>
+      <div class="mt-4 rounded-md bg-ink-50 p-3">
+        <%= turbo_frame_tag "clock", src: clock_path, class: "block" do %>
+          <span class="text-sm text-ink-700">加载中…</span>
+        <% end %>
+      </div>
+    </div>
+
+    <%# ③ Turbo Streams %>
+    <div class="rounded-md border border-ink-100 bg-white p-6">
+      <h3 class="text-base font-semibold text-ink-900">③ Turbo Streams</h3>
+      <p class="mt-2 text-sm text-ink-700">提交表单后，服务端返回 turbo-stream 指令把新留言 append 到列表，无需手写 JS。</p>
+      <div class="mt-4">
+        <%= render "message_form" %>
+        <ul id="messages" class="space-y-2 text-sm"></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%# ============ CTA ============ %>
+<section class="bg-gradient-to-r from-primary-700 to-primary text-white">
+  <div class="mx-auto max-w-4xl px-6 py-16 text-center">
+    <h2 class="text-3xl font-bold tracking-tight lg:text-4xl">一诺入此门，后台即成序</h2>
+    <p class="mt-4 text-white/80">权限、日志、界面、生成器皆备，留你把时间，付与真正的生意。</p>
+    <div class="mt-8 flex flex-wrap justify-center gap-4">
+      <%= link_to "立即进入后台", admin_login_path, data: { turbo: false },
+            class: "rounded-md bg-white px-6 py-3 text-base font-semibold text-primary-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-ink-50" %>
+      <a href="#" class="rounded-md border border-white/30 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10">阅读文档</a>
+    </div>
+  </div>
+</section>
+
+<%# ============ 页脚 ============ %>
+<footer class="bg-ink-900 text-white/70">
+  <div class="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-2 text-white">
+      <span class="grid h-7 w-7 place-items-center rounded-md bg-accent text-xs font-bold">青</span>
+      <span class="font-semibold tracking-wide">青乌序 QingWuXu</span>
+    </div>
+    <p class="text-sm">Rails 8 · Hotwire + Inertia · Ant Design Pro</p>
+    <p class="text-sm">气乘风散，脉遇水止</p>
+    <p class="text-sm">© <%= Time.current.year %> 青乌序 · 仅供演示</p>
+  </div>
+</footer>

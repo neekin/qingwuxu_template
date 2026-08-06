@@ -1,9 +1,13 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# frozen_string_literal: true
+
+# 默认超级管理员（四期接 ActionPolicy 时按 super_admin 短路放行）。
+# 用户名 / 手机 / 邮箱 三种方式 + 密码均可登录。
+User.find_or_create_by!(username: "admin") do |u|
+  u.email = "admin@qingwuxu.dev"
+  u.phone = "13800000000"
+  u.password = "admin123456"
+  u.super_admin = true
+  u.status = :enabled
+end
+
+puts "Seed 完成：admin / 13800000000 / admin123456（用户名 / 手机 / 邮箱 + 密码 均可登录）"
