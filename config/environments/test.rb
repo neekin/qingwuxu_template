@@ -25,8 +25,9 @@ Rails.application.configure do
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable
 
-  # Disable request forgery protection in test environment.
-  config.action_controller.allow_forgery_protection = false
+  # P0 安全修复：后台 CSRF 防护必须强制生效（含测试环境），以便验证
+  # 「带 token 的 POST 正常、裸 POST 无 token 返回 422」。Inertia 前端默认带 token。
+  config.action_controller.allow_forgery_protection = true
 
   # Store uploaded files on the local file system in a temporary directory.
   config.active_storage.service = :test

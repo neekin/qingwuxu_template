@@ -29,8 +29,8 @@ module Admin
       begin
         vc = VerificationCode.generate!(receiver: receiver, channel: channel, purpose: purpose)
         SmsService.send_code(receiver: receiver, code: vc.code, purpose: purpose)
-        # 开发期把码一并返回，方便前端联调；生产环境应删除 dev_code。
-        render json: { ok: true, dev_code: vc.code }
+        # 仅 development 环境回真实验证码，方便前端联调；其余环境（test/production）一律不泄露。
+        render json: { ok: true }.tap { |h| h[:dev_code] = vc.code if Rails.env.development? }
       rescue VerificationCode::RateLimitError => e
         render json: { error: e.message }, status: :too_many_requests
       end

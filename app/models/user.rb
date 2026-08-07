@@ -45,6 +45,23 @@ class User < ApplicationRecord
     username.presence || phone.presence || email.presence || "用户#{id}"
   end
 
+  # ---- RBAC 关联（阶段 0）----
+  has_many :user_roles, dependent: :destroy
+  has_many :roles, through: :user_roles
+
+  # 是否拥有某权限点（RBAC 最小授权单元是 permission.code）。
+  # 超管直通；其余按「角色 → 权限」聚合判定（预加载避免 N+1）。
+  def has_permission?(code)
+    return true if super_admin?
+    roles.includes(:permissions).any? { |role| role.permissions.any? { |p| p.code == code.to_s } }
+  end
+
+  # 当前用户全部权限字符（用于动态菜单 / 接口鉴权）。
+  def permission_codes
+    return Permission.pluck(:code) if super_admin?
+    roles.flat_map { |role| role.permissions.pluck(:code) }.uniq
+  end
+
   private
 
   def password_length

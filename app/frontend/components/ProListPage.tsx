@@ -8,8 +8,10 @@ type ProListPageProps<T> = {
   /** 行主键：字段名或函数 */
   rowKey: string | ((record: T) => string)
   columns: ProColumns<T>[]
-  /** 前端 mock 数据 */
-  mockData: T[]
+  /** 真实数据（由后端 Inertia props 传入）；与 mockData 二选一 */
+  data?: T[]
+  /** 前端 mock 数据（仅无后端接口的页面使用，逐步废弃） */
+  mockData?: T[]
   /** 是否显示搜索栏，默认 true */
   search?: boolean
   /** 是否可编辑（新建/编辑/删除），默认 true；日志等只读页传 false */
@@ -24,23 +26,26 @@ function keyOf<T>(record: T, rowKey: string | ((r: T) => string)): string {
 }
 
 /**
- * 可复用列表页模板（本期 mock 数据，本地 state CRUD）。
+ * 可复用列表页模板。
+ * - 真实数据：传 `data`（后端 Inertia props），由服务端查询后注入。
+ * - 兜底：未接后端的页面仍可传 `mockData` 本地渲染（后续分期替换）。
  * 业务字段（列/数据/表单）由调用页通过 props 注入，本组件不写任何业务硬编码。
- * 未来接真实数据时，只需把 dataSource 换成 request 异步拉取即可。
+ * 当前为客户端分页/搜索（ProTable 内置）；服务端分页为后续分期增强项。
  */
 export default function ProListPage<T>({
   rowKey,
   columns,
+  data,
   mockData,
   search = true,
   editable = true,
   formItems,
 }: ProListPageProps<T>) {
-  const [data, setData] = useState<T[]>(mockData)
+  const [list, setList] = useState<T[]>(data ?? mockData ?? [])
   const [editing, setEditing] = useState<T | null>(null)
   const [open, setOpen] = useState(false)
 
-  const handleDelete = (k: string) => setData((prev) => prev.filter((r) => keyOf(r, rowKey) !== k))
+  const handleDelete = (k: string) => setList((prev) => prev.filter((r) => keyOf(r, rowKey) !== k))
 
   const actionColumn: ProColumns<T> | null = editable
     ? {
@@ -67,7 +72,7 @@ export default function ProListPage<T>({
       <ProTable
         rowKey={rowKey as any}
         columns={(actionColumn ? [...columns, actionColumn] : columns) as ProColumns<any>[]}
-        dataSource={data as any}
+        dataSource={list as any}
         search={search ? {} : false}
         pagination={{ pageSize: 10 }}
         toolBarRender={() =>
@@ -90,12 +95,11 @@ export default function ProListPage<T>({
         onFinish={async (values: Record<string, unknown>) => {
           if (editing) {
             const k = keyOf(editing, rowKey)
-            setData((prev) => prev.map((r) => (keyOf(r, rowKey) === k ? { ...r, ...values } : r)))
+            setList((prev) => prev.map((r) => (keyOf(r, rowKey) === k ? { ...r, ...values } : r)))
           } else {
-            // 新增：用时间戳生成临时主键（若 rowKey 为字段名）
             const id = String(Date.now())
             const newRecord = (typeof rowKey === 'function' ? { ...values } : { ...values, [rowKey]: id }) as T
-            setData((prev) => [newRecord, ...prev])
+            setList((prev) => [newRecord, ...prev])
           }
           return true
         }}

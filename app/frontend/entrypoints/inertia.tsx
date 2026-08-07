@@ -46,8 +46,17 @@ void createInertiaApp({
       forceIndicesArrayFormatInFormData: false,
       withAllErrors: true,
     },
+    // 集中注入 CSRF 头：Rails protect_from_forgery 校验 X-CSRF-Token（来自 meta
+    // csrf-token），而 Inertia 走 axios/XHR 不会自动带。此处对每次 visit 动态读取
+    // meta，避免每个页面手写 X-CSRF-Token（login/register 的 fetch 仍各自带）。
     visitOptions: () => {
-      return { queryStringArrayFormat: 'brackets' }
+      const csrf =
+        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)
+          ?.content || ''
+      return {
+        queryStringArrayFormat: 'brackets',
+        headers: { 'X-CSRF-Token': csrf },
+      }
     },
   },
 }).catch((error) => {
