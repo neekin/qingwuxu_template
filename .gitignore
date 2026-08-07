@@ -45,3 +45,6 @@ node_modules
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# AI 协作产物（GStack 报告，不进版本库）
+/deliverables
