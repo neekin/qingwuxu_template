@@ -57,10 +57,15 @@ class ApplicationPolicy
       # 本部门：仅当前用户所属部门
       relation.where(department_id: user.department_id)
     when :dept_and_child
-      # 本部门及下级：包含祖先路径命中当前部门的全部子树节点
-      child_ids = Department.where("ancestors LIKE ? OR id = ?",
-                                   "%#{user.department_id}%", user.department_id).pluck(:id)
-      relation.where(department_id: [user.department_id, *child_ids])
+      # 本部门及下级：含当前部门（id 自身）或祖先路径以当前部门为节点的全部子树节点。
+      # 锚点：ancestors 为逗号分隔、无首尾逗号的字符串（如 "1,3"）。必须按逗号边界精确匹配，
+      # 禁止 '%id%' 模糊匹配——否则部门 10 的用户会因 "1,105" 含子串 "10" 误看到部门 105（越权）。
+      id = user.department_id
+      child_ids = Department.where(
+        "id = ? OR ancestors = ? OR ancestors LIKE ? OR ancestors LIKE ? OR ancestors LIKE ?",
+        id, id.to_s, "#{id},%", "%,#{id},%", "%,#{id}"
+      ).pluck(:id)
+      relation.where(department_id: [id, *child_ids])
     when :self
       # 仅自己
       relation.where(id: user.id)
