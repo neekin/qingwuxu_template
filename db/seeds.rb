@@ -132,6 +132,29 @@ dict = seed_menu("dict", "字典管理", :catalog, permission_code: "system:dict
 seed_menu("dict-types", "类型管理", :menu, route: "/admin/dictionary_types", permission_code: "system:dict:type:list", icon: "BookOutlined", sort: 1, parent_id: dict.id)
 seed_menu("dict-data", "数据项管理", :menu, route: "/admin/dictionary_data", permission_code: "system:dict:data:list", icon: "UnorderedListOutlined", sort: 2, parent_id: dict.id)
 
+# 在线用户（P1 第一批末项）：会话监控 + 强制下线。
+rbac_permissions += [
+  %w[system:online:list 在线用户监控 monitor/online],
+  %w[system:online:force 强制下线 monitor/online],
+]
+rbac_permissions.uniq.each do |(code, name, resource)|
+  perm_by_code[code] = Permission.find_or_create_by!(code: code) do |p|
+    p.name = name
+    p.resource = resource
+  end
+end
+# super_admin 绑定全部权限（含在线用户）。
+Permission.pluck(:id).each do |pid|
+  RolePermission.find_or_create_by!(role_id: super_admin_role.id, permission_id: pid)
+end
+# admin 角色也授予在线用户权限（监控 + 强制下线）。
+%w[system:online:list system:online:force].each do |code|
+  perm = perm_by_code[code]
+  next unless perm
+  RolePermission.find_or_create_by!(role_id: admin_role.id, permission_id: perm.id)
+end
+seed_menu("online-users", "在线用户", :menu, route: "/admin/online_users", permission_code: "system:online:list", icon: "LogoutOutlined", sort: 3, parent_id: mon.id)
+
 # 默认 admin 用户绑定超级管理员角色
 if (admin_user = User.find_by(username: "admin"))
   UserRole.find_or_create_by!(user_id: admin_user.id, role_id: super_admin_role.id)

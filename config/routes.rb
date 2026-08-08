@@ -22,6 +22,8 @@ Rails.application.routes.draw do
     resources :dictionary_data, only: [:index, :create, :update, :destroy]
     # 部门管理（真实 REST，含 POST/PUT/DELETE 写路径）
     resources :departments, only: [:index, :create, :update, :destroy]
+    # 在线用户（监控视图：列出在线会话 + 强制下线）
+    resources :online_users, only: [:index, :destroy]
     get 'login', to: 'sessions#new', as: :login
     post 'login', to: 'sessions#create'
     post 'login/send_code', to: 'sessions#send_code', as: :login_send_code
