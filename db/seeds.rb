@@ -101,6 +101,33 @@ seed_menu("login-logs", "登录日志", :menu, route: "/admin/login-logs", permi
 seed_menu("profile", "个人中心", :menu, route: "/admin/profile", permission_code: "user:profile:view", icon: "IdcardOutlined", sort: 4)
 seed_menu("inertia-example", "Inertia 演示", :menu, route: "/admin/inertia-example", icon: "ExperimentOutlined", sort: 5)
 
+# 字典管理（P1 首模块）：目录 + 类型管理 + 数据项管理，对齐 adminMenu.tsx。
+rbac_permissions += [
+  %w[system:dict:type:list 字典类型管理 system/dict/type],
+  %w[system:dict:type:create 字典类型新增 system/dict/type],
+  %w[system:dict:type:edit 字典类型编辑 system/dict/type],
+  %w[system:dict:type:delete 字典类型删除 system/dict/type],
+  %w[system:dict:data:list 字典数据项管理 system/dict/data],
+  %w[system:dict:data:create 字典数据项新增 system/dict/data],
+  %w[system:dict:data:edit 字典数据项编辑 system/dict/data],
+  %w[system:dict:data:delete 字典数据项删除 system/dict/data],
+]
+# 重新注册新权限码（幂等），确保 Permission 表含字典相关权限点。
+rbac_permissions.uniq.each do |(code, name, resource)|
+  perm_by_code[code] = Permission.find_or_create_by!(code: code) do |p|
+    p.name = name
+    p.resource = resource
+  end
+end
+# 新权限点同步授权给 super_admin（全量绑定）。
+Permission.pluck(:id).each do |pid|
+  RolePermission.find_or_create_by!(role_id: super_admin_role.id, permission_id: pid)
+end
+
+dict = seed_menu("dict", "字典管理", :catalog, permission_code: "system:dict:type:list", icon: "BookOutlined", sort: 5, parent_id: sys.id)
+seed_menu("dict-types", "类型管理", :menu, route: "/admin/dictionary_types", permission_code: "system:dict:type:list", icon: "BookOutlined", sort: 1, parent_id: dict.id)
+seed_menu("dict-data", "数据项管理", :menu, route: "/admin/dictionary_data", permission_code: "system:dict:data:list", icon: "UnorderedListOutlined", sort: 2, parent_id: dict.id)
+
 # 默认 admin 用户绑定超级管理员角色
 if (admin_user = User.find_by(username: "admin"))
   UserRole.find_or_create_by!(user_id: admin_user.id, role_id: super_admin_role.id)
@@ -158,6 +185,23 @@ if seeding_demo
     end
     role = Role.find_by(code: role_code)
     UserRole.find_or_create_by!(user_id: user.id, role_id: role.id) if role
+  end
+
+  # 字典联调数据（若依式常用字典）：sys_user_sex 男/女；便于前端字典页联调。
+  sex_type = DictionaryType.find_or_create_by!(code: "sys_user_sex") do |t|
+    t.name = "用户性别"
+    t.status = :enabled
+    t.sort = 1
+  end
+  [
+    ["男", "0", 1],
+    ["女", "1", 2],
+  ].each do |(label, value, sort)|
+    DictionaryData.find_or_create_by!(dict_type: sex_type.code, value: value) do |d|
+      d.label = label
+      d.status = :enabled
+      d.sort = sort
+    end
   end
 else
   Rails.logger.info "生产环境：已跳过 12 个 demo 用户与 5 个 demo 角色，仅保留 RBAC 基础与 super_admin 初始账户。"

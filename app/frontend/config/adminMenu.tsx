@@ -9,6 +9,8 @@ import {
   HistoryOutlined,
   IdcardOutlined,
   ExperimentOutlined,
+  BookOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons'
 
 /**
@@ -47,6 +49,16 @@ export const adminMenu: AdminMenuItem[] = [
       { key: 'roles', label: '角色管理', icon: <TeamOutlined />, path: '/admin/roles', permission: 'system:role:list' },
       { key: 'menus', label: '菜单管理', icon: <MenuOutlined />, path: '/admin/menus', permission: 'system:menu:list' },
       { key: 'departments', label: '部门管理', icon: <ApartmentOutlined />, path: '/admin/departments', permission: 'system:dept:list' },
+      {
+        key: 'dict',
+        label: '字典管理',
+        icon: <BookOutlined />,
+        permission: 'system:dict:type:list',
+        children: [
+          { key: 'dict-types', label: '类型管理', icon: <BookOutlined />, path: '/admin/dictionary_types', permission: 'system:dict:type:list' },
+          { key: 'dict-data', label: '数据项管理', icon: <UnorderedListOutlined />, path: '/admin/dictionary_data', permission: 'system:dict:data:list' },
+        ],
+      },
     ],
   },
   {

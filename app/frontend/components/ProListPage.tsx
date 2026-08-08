@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { ProTable, ModalForm } from '@ant-design/pro-components'
 import type { ProColumns } from '@ant-design/pro-components'
-import { Button, Popconfirm } from 'antd'
+import { Button, Popconfirm, message } from 'antd'
+import { router } from '@inertiajs/react'
 import type { ReactNode } from 'react'
 
 type ProListPageProps<T> = {
@@ -18,6 +19,15 @@ type ProListPageProps<T> = {
   editable?: boolean
   /** 新建/编辑弹窗内的表单字段（由调用页用 ProForm 字段提供） */
   formItems?: ReactNode
+  /**
+   * 写路径 API 基址（如 "/admin/dictionary_types"）。传入即启用服务端模式：
+   * - 新建 → router.post(apiBase, values)
+   * - 编辑 → router.put(`${apiBase}/${id}`, values)
+   * - 删除 → router.delete(`${apiBase}/${id}`)
+   * 后端成功返回 redirect → Inertia 自动刷新列表（data 由服务端重新注入）。
+   * 留空则退回原前端本地 mock 增删改（仅遗留只读页使用）。
+   */
+  apiBase?: string
 }
 
 function keyOf<T>(record: T, rowKey: string | ((r: T) => string)): string {
@@ -40,12 +50,20 @@ export default function ProListPage<T>({
   search = true,
   editable = true,
   formItems,
+  apiBase,
 }: ProListPageProps<T>) {
   const [list, setList] = useState<T[]>(data ?? mockData ?? [])
   const [editing, setEditing] = useState<T | null>(null)
   const [open, setOpen] = useState(false)
 
-  const handleDelete = (k: string) => setList((prev) => prev.filter((r) => keyOf(r, rowKey) !== k))
+  // 服务端模式：删除走真实 DELETE；否则退回本地过滤（遗留只读/无后端页）。
+  const handleDelete = (k: string) => {
+    if (apiBase) {
+      router.delete(`${apiBase}/${k}`)
+    } else {
+      setList((prev) => prev.filter((r) => keyOf(r, rowKey) !== k))
+    }
+  }
 
   const actionColumn: ProColumns<T> | null = editable
     ? {
@@ -92,17 +110,31 @@ export default function ProListPage<T>({
         initialValues={editing || {}}
         onOpenChange={setOpen}
         modalProps={{ destroyOnClose: true }}
-        onFinish={async (values: Record<string, unknown>) => {
-          if (editing) {
-            const k = keyOf(editing, rowKey)
-            setList((prev) => prev.map((r) => (keyOf(r, rowKey) === k ? { ...r, ...values } : r)))
-          } else {
-            const id = String(Date.now())
-            const newRecord = (typeof rowKey === 'function' ? { ...values } : { ...values, [rowKey]: id }) as T
-            setList((prev) => [newRecord, ...prev])
-          }
-          return true
-        }}
+        onFinish={(values: Record<string, unknown>) =>
+          new Promise<boolean>((resolve) => {
+            // 服务端模式：新建 POST / 编辑 PUT，失败保持弹窗打开以展示错误。
+            if (apiBase) {
+              const id = keyOf(editing as T, rowKey)
+              const url = editing ? `${apiBase}/${id}` : apiBase
+              const submit = editing ? router.put : router.post
+              submit(url, values as any, {
+                onSuccess: () => { setOpen(false); resolve(true) },
+                onError: () => { message.error('提交失败，请检查表单'); resolve(false) },
+              })
+            } else {
+              // 遗留本地 mock 模式（无后端写接口）
+              if (editing) {
+                const k = keyOf(editing, rowKey)
+                setList((prev) => prev.map((r) => (keyOf(r, rowKey) === k ? { ...r, ...values } : r)))
+              } else {
+                const id = String(Date.now())
+                const newRecord = (typeof rowKey === 'function' ? { ...values } : { ...values, [rowKey]: id }) as T
+                setList((prev) => [newRecord, ...prev])
+              }
+              resolve(true)
+            }
+          })
+        }
       >
         {formItems}
       </ModalForm>
