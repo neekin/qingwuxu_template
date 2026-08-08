@@ -13,6 +13,7 @@ type User = {
   email: string | null
   phone: string
   role: string
+  department?: string
   status: 'enabled' | 'disabled'
   super_admin: boolean
   created_at: string
@@ -23,6 +24,12 @@ const columns: ProColumns<User>[] = [
   { title: '邮箱', dataIndex: 'email' },
   { title: '手机号', dataIndex: 'phone' },
   { title: '角色', dataIndex: 'role' },
+  {
+    title: '部门',
+    dataIndex: 'department',
+    search: false,
+    render: (_, r) => (r.department ? <Tag color="blue">{r.department}</Tag> : <Tag>—</Tag>),
+  },
   {
     title: '状态',
     dataIndex: 'status',

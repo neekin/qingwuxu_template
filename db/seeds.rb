@@ -39,6 +39,9 @@ rbac_permissions = [
   %w[system:role:list 角色管理 system/role],
   %w[system:menu:list 菜单管理 system/menu],
   %w[system:dept:list 部门管理 system/dept],
+  %w[system:dept:create 部门新增 system/dept],
+  %w[system:dept:edit 部门编辑 system/dept],
+  %w[system:dept:delete 部门删除 system/dept],
   %w[monitor:manage 系统监控 monitor],
   %w[monitor:operlog:list 操作日志 monitor/operlog],
   %w[monitor:loginlog:list 登录日志 monitor/loginlog],
@@ -70,6 +73,7 @@ end
 
 # admin 绑定部分权限（演示分权，不含 system:menu:list）
 %w[dashboard:view system:manage system:user:list system:role:list system:dept:list
+   system:dept:create system:dept:edit system:dept:delete
    monitor:manage monitor:operlog:list monitor:loginlog:list user:profile:view].each do |code|
   perm = perm_by_code[code]
   next unless perm
@@ -161,7 +165,30 @@ if seeding_demo
     end
   end
 
-  # 演示用户（dept 仅作展示分组，当前无 dept 表；密码统一 demo123456）
+  # 部门树（P1 第二批）：演示部门 + 绑定 demo 用户 department_id。
+  dept_hq = Department.find_or_create_by!(name: "总公司") do |d|
+    d.code = "HQ"
+    d.sort = 0
+    d.status = :enabled
+  end
+  dept_by_name = { "总公司" => dept_hq }
+  [
+    ["研发部", "RD", 1],
+    ["市场部", "MKT", 2],
+    ["财务部", "FIN", 3],
+    ["人事部", "HR", 4],
+    ["运维部", "OPS", 5],
+  ].each do |(name, code, sort)|
+    dep = Department.find_or_create_by!(name: name) do |d|
+      d.code = code
+      d.parent = dept_hq
+      d.sort = sort
+      d.status = :enabled
+    end
+    dept_by_name[name] = dep
+  end
+
+  # 演示用户（dept 字符串映射到真实部门；密码统一 demo123456）
   demo_users = [
     ["wangwu", "研发部", "user", :enabled],
     ["lisi", "市场部", "user", :enabled],
@@ -182,6 +209,7 @@ if seeding_demo
       u.phone = "139#{format('%08d', i + 1)}"
       u.password = "demo123456"
       u.status = status
+      u.department = dept_by_name[_dept]
     end
     role = Role.find_by(code: role_code)
     UserRole.find_or_create_by!(user_id: user.id, role_id: role.id) if role

@@ -28,6 +28,12 @@ type ProListPageProps<T> = {
    * 留空则退回原前端本地 mock 增删改（仅遗留只读页使用）。
    */
   apiBase?: string
+  /**
+   * 编辑态表单工厂：传入函数时以当前编辑记录为参数动态生成表单字段，
+   * 用于「上级不得选自身及后代」等需依赖当前记录的场景（如部门树）。
+   * 普通页面仍可直接传 JSX 节点（静态字段）。
+   */
+  formItemsFor?: (record?: T) => ReactNode
 }
 
 function keyOf<T>(record: T, rowKey: string | ((r: T) => string)): string {
@@ -51,6 +57,7 @@ export default function ProListPage<T>({
   editable = true,
   formItems,
   apiBase,
+  formItemsFor,
 }: ProListPageProps<T>) {
   const [list, setList] = useState<T[]>(data ?? mockData ?? [])
   const [editing, setEditing] = useState<T | null>(null)
@@ -136,7 +143,7 @@ export default function ProListPage<T>({
           })
         }
       >
-        {formItems}
+        {typeof formItemsFor === 'function' ? formItemsFor(editing || undefined) : formItems}
       </ModalForm>
     </>
   )
