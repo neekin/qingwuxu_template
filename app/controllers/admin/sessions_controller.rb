@@ -86,6 +86,7 @@ module Admin
 
     # 退出
     def destroy
+      current_login_session&.destroy
       reset_session
       redirect_to admin_login_path
     end
@@ -134,6 +135,14 @@ module Admin
     def log_in(user)
       reset_session # 防 session fixation
       session[:user_id] = user.id
+      # 记录在线会话令牌（强制下线 = 删除该记录，下次请求令牌校验失败即被弹回）。
+      login_session = LoginSession.create!(
+        user: user,
+        ip: request.remote_ip,
+        user_agent: request.user_agent,
+        last_seen_at: Time.current
+      )
+      session[:login_session_token] = login_session.token
       user.update_columns(last_login_at: Time.current, login_ip: request.remote_ip)
     end
 

@@ -26,6 +26,9 @@ class User < ApplicationRecord
   # ---- 部门关联（P1 第二批：数据权限按 department_id 过滤）----
   belongs_to :department, optional: true
 
+  # ---- 在线会话（P1 第一批末项：在线用户监控 + 强制下线）----
+  has_many :login_sessions, dependent: :destroy
+
   # ---- 状态（RBAC 约定：0=禁用 1=启用）----
   enum :status, { disabled: 0, enabled: 1 }, default: :enabled
 

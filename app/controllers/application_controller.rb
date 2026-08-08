@@ -26,13 +26,35 @@ class ApplicationController < ActionController::Base
   end
 
   # 被禁用(disabled)用户视为未登录：清空其会话并返回 nil，使 require_login 将其弹走。
+  # 强制下线：会话令牌存在但已失效（被管理员删除 LoginSession）→ 视为未登录弹回登录页。
   def resolve_current_user
     return nil unless session[:user_id]
     user = User.find_by(id: session[:user_id])
-    return user unless user&.disabled?
-    session.delete(:user_id)
-    nil
+    return nil unless user
+    if user.disabled?
+      session.delete(:user_id)
+      session.delete(:login_session_token)
+      return nil
+    end
+    if (tok = session[:login_session_token]).present?
+      sess = LoginSession.find_by(token: tok, user_id: user.id)
+      unless sess
+        session.delete(:user_id)
+        session.delete(:login_session_token)
+        return nil
+      end
+      sess.touch_last_seen
+    end
+    user
   end
+
+  # 当前登录会话记录（用于「在线用户」强制下线时判断是否为自己的当前会话）。
+  def current_login_session
+    return @current_login_session if instance_variable_defined?(:@current_login_session)
+    @current_login_session = session[:login_session_token].presence &&
+      LoginSession.find_by(token: session[:login_session_token])
+  end
+  helper_method :current_login_session
 
   def logged_in?
     current_user.present?

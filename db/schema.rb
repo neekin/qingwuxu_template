@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_010001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_020000) do
   create_table "departments", force: :cascade do |t|
     t.string "ancestors"
     t.string "code", null: false
@@ -47,6 +47,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_010001) do
     t.integer "status", default: 1, null: false
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_dictionary_types_on_code", unique: true
+  end
+
+  create_table "login_sessions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "ip"
+    t.datetime "last_seen_at"
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.text "user_agent"
+    t.integer "user_id", null: false
+    t.index ["token"], name: "index_login_sessions_on_token", unique: true
+    t.index ["user_id"], name: "index_login_sessions_on_user_id"
   end
 
   create_table "menus", force: :cascade do |t|
@@ -133,6 +145,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_010001) do
     t.index ["receiver", "channel", "purpose"], name: "index_verification_codes_on_receiver_and_channel_and_purpose"
   end
 
+  add_foreign_key "login_sessions", "users", on_delete: :cascade
   add_foreign_key "menus", "menus", column: "parent_id", on_delete: :cascade
   add_foreign_key "role_permissions", "permissions", on_delete: :cascade
   add_foreign_key "role_permissions", "roles", on_delete: :cascade
