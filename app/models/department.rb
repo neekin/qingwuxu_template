@@ -8,6 +8,9 @@ class Department < ApplicationRecord
   belongs_to :parent, class_name: "Department", foreign_key: :parent_id, optional: true
   has_many :children, class_name: "Department", foreign_key: :parent_id, dependent: :nullify
 
+  # ---- 状态（与 User 一致：0=禁用 1=启用）----
+  enum :status, { disabled: 0, enabled: 1 }, default: :enabled
+
   validates :code, presence: true, uniqueness: { case_sensitive: false }
   validates :name, presence: true
   validates :sort, numericality: { only_integer: true }, allow_nil: true
