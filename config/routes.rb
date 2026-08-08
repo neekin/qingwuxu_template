@@ -18,6 +18,9 @@ Rails.application.routes.draw do
     get 'login-logs', to: 'pages#login_logs'
     get 'profile', to: 'pages#profile'
     get 'inertia-example', to: 'inertia_example#index'
+    # 字典管理（真实 REST，含 POST/PUT/DELETE 写路径）
+    resources :dictionary_types, only: [:index, :create, :update, :destroy]
+    resources :dictionary_data, only: [:index, :create, :update, :destroy]
     get 'login', to: 'sessions#new', as: :login
     post 'login', to: 'sessions#create'
     post 'login/send_code', to: 'sessions#send_code', as: :login_send_code

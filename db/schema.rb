@@ -10,7 +10,30 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_07_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_000001) do
+  create_table "dictionary_data", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "dict_type", null: false
+    t.string "label", null: false
+    t.text "remark"
+    t.integer "sort", default: 0, null: false
+    t.integer "status", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.string "value", null: false
+    t.index ["dict_type"], name: "index_dictionary_data_on_dict_type"
+  end
+
+  create_table "dictionary_types", force: :cascade do |t|
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.text "remark"
+    t.integer "sort", default: 0, null: false
+    t.integer "status", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_dictionary_types_on_code", unique: true
+  end
+
   create_table "menus", force: :cascade do |t|
     t.string "component"
     t.datetime "created_at", null: false
