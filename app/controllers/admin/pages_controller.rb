@@ -14,13 +14,14 @@ module Admin
       authorize! User, to: :index?
       # IDOR 防线：用 policy_scope 包装查询（超管全量 / 普通按权限过滤，无权限返回空集）
       users = policy_scope(User.all, with: UserPolicy)
-                   .includes(:roles).order(created_at: :desc).map do |u|
+                   .includes(:roles, :department).order(created_at: :desc).map do |u|
         {
           id: u.id,
           username: u.username,
           email: u.email,
           phone: u.phone,
           role: u.roles.pluck(:name).join("、"),
+          department: u.department&.name,
           status: u.status,
           super_admin: u.super_admin?,
           created_at: u.created_at.strftime("%Y-%m-%d %H:%M")
@@ -50,11 +51,6 @@ module Admin
     def menus
       authorize! nil, to: :view?, with: MenuPolicy
       render_page(:menus)
-    end
-
-    def departments
-      authorize! nil, to: :view?, with: DepartmentPolicy
-      render_page(:departments)
     end
 
     def operation_logs

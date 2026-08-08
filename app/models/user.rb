@@ -23,8 +23,15 @@ class User < ApplicationRecord
     password_digest.present?
   end
 
+  # ---- 部门关联（P1 第二批：数据权限按 department_id 过滤）----
+  belongs_to :department, optional: true
+
   # ---- 状态（RBAC 约定：0=禁用 1=启用）----
   enum :status, { disabled: 0, enabled: 1 }, default: :enabled
+
+  # ---- 数据权限范围（0=全部 /1=自定义 /2=本部门 /3=本部门及下级 /4=仅自己）----
+  # prefix: :data_scope 避免值名 all/self 与 ActiveRecord 类方法冲突（属性读取 data_scope 仍返回符号）。
+  enum :data_scope, { all: 0, custom: 1, dept: 2, dept_and_child: 3, self: 4 }, default: :all, prefix: :data_scope
 
   # ---- 校验 ----
   validates :username, presence: true, uniqueness: { case_sensitive: false }

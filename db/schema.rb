@@ -10,7 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_010001) do
+  create_table "departments", force: :cascade do |t|
+    t.string "ancestors"
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.string "leader"
+    t.string "name", null: false
+    t.bigint "parent_id"
+    t.text "remark"
+    t.integer "sort", default: 0, null: false
+    t.integer "status", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_departments_on_code", unique: true
+    t.index ["parent_id"], name: "index_departments_on_parent_id"
+  end
+
   create_table "dictionary_data", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "dict_type", null: false
@@ -88,6 +103,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_000001) do
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.integer "data_scope", default: 0, null: false
+    t.integer "department_id"
     t.string "email"
     t.datetime "last_login_at"
     t.string "login_ip"
@@ -97,6 +114,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_000001) do
     t.boolean "super_admin", default: false, null: false
     t.datetime "updated_at", null: false
     t.string "username", null: false
+    t.index ["department_id"], name: "index_users_on_department_id"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["phone"], name: "index_users_on_phone", unique: true
     t.index ["username"], name: "index_users_on_username", unique: true
@@ -120,4 +138,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_000001) do
   add_foreign_key "role_permissions", "roles", on_delete: :cascade
   add_foreign_key "user_roles", "roles", on_delete: :cascade
   add_foreign_key "user_roles", "users", on_delete: :cascade
+  add_foreign_key "users", "departments", on_delete: :nullify
 end

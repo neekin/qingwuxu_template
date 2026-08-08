@@ -13,7 +13,6 @@ Rails.application.routes.draw do
     get 'users', to: 'pages#users'
     get 'roles', to: 'pages#roles'
     get 'menus', to: 'pages#menus'
-    get 'departments', to: 'pages#departments'
     get 'operation-logs', to: 'pages#operation_logs'
     get 'login-logs', to: 'pages#login_logs'
     get 'profile', to: 'pages#profile'
@@ -21,6 +20,8 @@ Rails.application.routes.draw do
     # 字典管理（真实 REST，含 POST/PUT/DELETE 写路径）
     resources :dictionary_types, only: [:index, :create, :update, :destroy]
     resources :dictionary_data, only: [:index, :create, :update, :destroy]
+    # 部门管理（真实 REST，含 POST/PUT/DELETE 写路径）
+    resources :departments, only: [:index, :create, :update, :destroy]
     get 'login', to: 'sessions#new', as: :login
     post 'login', to: 'sessions#create'
     post 'login/send_code', to: 'sessions#send_code', as: :login_send_code
