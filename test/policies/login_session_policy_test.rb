@@ -3,7 +3,7 @@
 require "test_helper"
 
 # 在线用户授权：超管直通、持权限放行、无权限被 IDOR 防线拦截。
-class OnlineUserPolicyTest < ActiveSupport::TestCase
+class LoginSessionPolicyTest < ActiveSupport::TestCase
   setup do
     @super = User.create!(
       username: "op_super_#{SecureRandom.hex(3)}",
@@ -30,26 +30,26 @@ class OnlineUserPolicyTest < ActiveSupport::TestCase
   end
 
   test "超管直通：index?/destroy? 均放行" do
-    assert OnlineUserPolicy.new(LoginSession, user: @super).index?
-    assert OnlineUserPolicy.new(LoginSession, user: @super).destroy?
+    assert LoginSessionPolicy.new(LoginSession, user: @super).index?
+    assert LoginSessionPolicy.new(LoginSession, user: @super).destroy?
   end
 
   test "持权限用户 index?/destroy? 放行" do
-    assert OnlineUserPolicy.new(LoginSession, user: @viewer).index?
-    assert OnlineUserPolicy.new(LoginSession, user: @viewer).destroy?
+    assert LoginSessionPolicy.new(LoginSession, user: @viewer).index?
+    assert LoginSessionPolicy.new(LoginSession, user: @viewer).destroy?
   end
 
   test "无权限用户 index? 拒绝（IDOR 防线）" do
-    refute OnlineUserPolicy.new(LoginSession, user: @no_perm).index?
+    refute LoginSessionPolicy.new(LoginSession, user: @no_perm).index?
   end
 
   test "policy_scope：超管返回全部，无权限返回空集" do
     LoginSession.create!(user: @viewer, last_seen_at: Time.current)
     assert_equal LoginSession.count,
-                 OnlineUserPolicy.new(LoginSession, user: @super)
+                 LoginSessionPolicy.new(LoginSession, user: @super)
                    .apply_scope(LoginSession.all, type: :active_record_relation).count
     assert_equal 0,
-                 OnlineUserPolicy.new(LoginSession, user: @no_perm)
+                 LoginSessionPolicy.new(LoginSession, user: @no_perm)
                    .apply_scope(LoginSession.all, type: :active_record_relation).count
   end
 end
