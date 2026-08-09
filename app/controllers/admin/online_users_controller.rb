@@ -27,7 +27,7 @@ module Admin
 
     # IDOR 防线：列表/写操作都过 policy_scope（超管全量 / 普通按权限过滤）。
     def scoped
-      policy_scope(LoginSession.all, with: OnlineUserPolicy)
+      policy_scope(LoginSession.all, with: LoginSessionPolicy)
     end
 
     def online_users_props
