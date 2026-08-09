@@ -1,5 +1,5 @@
 import { usePage, router } from '@inertiajs/react'
-import { Table, Button, Tag, message, Typography } from 'antd'
+import { App, Table, Button, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 
 type OnlineUser = {
@@ -15,6 +15,9 @@ type OnlineUser = {
 export default function OnlineUsersIndex() {
   const { props } = usePage<{ online_users: OnlineUser[] }>()
   const onlineUsers = props.online_users || []
+
+  // antd v6：用 App.useApp() 取 message，避免静态方法无法消费主题 context 的告警。
+  const { message } = App.useApp()
 
   const handleForceOffline = (id: number) => {
     router.delete(`/admin/online_users/${id}`, {

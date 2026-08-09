@@ -34,7 +34,7 @@ export default function ProfilePage() {
                     修改密码
                   </Button>
                 }
-                modalProps={{ destroyOnClose: true }}
+                modalProps={{ destroyOnHidden: true }}
                 onFinish={async () => true}
               >
                 <ProFormText.Password name="oldPassword" label="原密码" rules={[{ required: true, message: '请输入原密码' }]} />

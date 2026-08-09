@@ -72,7 +72,7 @@ export default function Register() {
         padding: 16,
       }}
     >
-      <Card bordered={false} style={{ width: '100%', maxWidth: 920, overflow: 'hidden' }} styles={{ body: { padding: 0 } }}>
+      <Card variant="borderless" style={{ width: '100%', maxWidth: 920, overflow: 'hidden' }} styles={{ body: { padding: 0 } }}>
         <div style={{ display: 'flex', flexWrap: 'wrap' }}>
           {/* 品牌面板 */}
           <div

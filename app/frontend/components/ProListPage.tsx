@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ProTable, ModalForm } from '@ant-design/pro-components'
 import type { ProColumns } from '@ant-design/pro-components'
-import { Button, Popconfirm, message } from 'antd'
+import { App, Button, Popconfirm } from 'antd'
 import { router } from '@inertiajs/react'
 import type { ReactNode } from 'react'
 
@@ -63,6 +63,9 @@ export default function ProListPage<T>({
   const [editing, setEditing] = useState<T | null>(null)
   const [open, setOpen] = useState(false)
 
+  // antd v6：用 App.useApp() 取 message，避免静态方法无法消费主题 context 的告警。
+  const { message } = App.useApp()
+
   // 服务端模式：删除走真实 DELETE；否则退回本地过滤（遗留只读/无后端页）。
   const handleDelete = (k: string) => {
     if (apiBase) {
@@ -116,7 +119,7 @@ export default function ProListPage<T>({
         open={open}
         initialValues={editing || {}}
         onOpenChange={setOpen}
-        modalProps={{ destroyOnClose: true }}
+        modalProps={{ destroyOnHidden: true }}
         onFinish={(values: Record<string, unknown>) =>
           new Promise<boolean>((resolve) => {
             // 服务端模式：新建 POST / 编辑 PUT，失败保持弹窗打开以展示错误。
