@@ -4,6 +4,8 @@ require "test_helper"
 
 module Admin
   # 字典类型管理控制器：三态验证（未登录跳登录 / 无权限 403 / 超管放行 + 写路径成功失败）
+  # 注意：前端 ProListPage 走 apiBase 服务端模式发「裸 values」（无 :dictionary_type 包裹），
+  # 控制器 dictionary_type_params 用 params.permit 直接收裸值，故测试亦发裸值。
   class DictionaryTypesControllerTest < ActionDispatch::IntegrationTest
     setup do
       @super = User.create!(
@@ -43,7 +45,7 @@ module Admin
     test "未登录创建字典类型跳登录" do
       get root_path
       post admin_dictionary_types_path,
-           params: { dictionary_type: { code: "t1", name: "测试" } },
+           params: { code: "t1", name: "测试" },
            headers: { "X-CSRF-Token" => csrf_token }
       assert_redirected_to admin_login_path
     end
@@ -52,7 +54,7 @@ module Admin
       login_as(@guest)
       get root_path
       post admin_dictionary_types_path,
-           params: { dictionary_type: { code: "t1", name: "测试" } },
+           params: { code: "t1", name: "测试" },
            headers: { "X-CSRF-Token" => csrf_token }
       assert_response :forbidden
     end
@@ -62,7 +64,7 @@ module Admin
       get root_path
       assert_difference -> { DictionaryType.count }, 1 do
         post admin_dictionary_types_path,
-             params: { dictionary_type: { code: "t1", name: "测试" } },
+             params: { code: "t1", name: "测试" },
              headers: { "X-CSRF-Token" => csrf_token }
       end
       assert_redirected_to admin_dictionary_types_path
@@ -73,7 +75,7 @@ module Admin
       get root_path
       assert_no_difference -> { DictionaryType.count } do
         post admin_dictionary_types_path,
-             params: { dictionary_type: { code: "", name: "" } },
+             params: { code: "", name: "" },
              headers: { "X-CSRF-Token" => csrf_token }
       end
       assert_response :unprocessable_entity
@@ -85,7 +87,7 @@ module Admin
       type = DictionaryType.create!(code: "u1", name: "原")
       get root_path
       put admin_dictionary_type_path(type),
-          params: { dictionary_type: { name: "改" } },
+          params: { name: "改" },
           headers: { "X-CSRF-Token" => csrf_token }
       assert_redirected_to admin_dictionary_types_path
       assert_equal "改", type.reload.name
@@ -96,7 +98,7 @@ module Admin
       type = DictionaryType.create!(code: "u2", name: "原")
       get root_path
       put admin_dictionary_type_path(type),
-          params: { dictionary_type: { code: "" } },
+          params: { code: "" },
           headers: { "X-CSRF-Token" => csrf_token }
       assert_response :unprocessable_entity
     end

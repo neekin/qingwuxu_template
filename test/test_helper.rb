@@ -18,7 +18,13 @@ end
 # Inertia 前端默认带 token；测试侧从登录页 HTML 的 <meta name="csrf-token"> 取回并随请求发送。
 class ActionDispatch::IntegrationTest
   # 从最近一次响应 HTML 中提取 CSRF token（admin layout 已渲染 csrf_meta_tags）。
+  # 注意：login_as 的最后一次响应是登录「重定向」（空 body），此时 token 为 nil；
+  # 故读取失败后回退到 GET 一个会渲染 admin layout 的页面取回真实 token（不影响后续断言）。
   def csrf_token
+    token = response.body[/name="csrf-token" content="([^"]+)"/, 1]
+    return token if token.present?
+
+    get admin_dashboard_path
     response.body[/name="csrf-token" content="([^"]+)"/, 1]
   end
 

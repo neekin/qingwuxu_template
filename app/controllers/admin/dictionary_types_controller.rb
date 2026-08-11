@@ -63,8 +63,9 @@ module Admin
       }
     end
 
+    # 前端 ProListPage 发裸 values（无 :dictionary_type 包裹），用 permit 直接收。
     def dictionary_type_params
-      params.require(:dictionary_type).permit(:code, :name, :status, :remark, :sort)
+      params.permit(:code, :name, :status, :remark, :sort)
     end
   end
 end

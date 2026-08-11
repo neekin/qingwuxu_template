@@ -9,45 +9,6 @@ module Admin
       render_page(:dashboard)
     end
 
-    # 授权范式（canonical 示例）：按权限点 system:user:list 判定 + 真实数据注入
-    def users
-      authorize! User, to: :index?
-      # IDOR 防线：用 policy_scope 包装查询（超管全量 / 普通按权限过滤，无权限返回空集）
-      users = policy_scope(User.all, with: UserPolicy)
-                   .includes(:roles, :department).order(created_at: :desc).map do |u|
-        {
-          id: u.id,
-          username: u.username,
-          email: u.email,
-          phone: u.phone,
-          role: u.roles.pluck(:name).join("、"),
-          department: u.department&.name,
-          status: u.status,
-          super_admin: u.super_admin?,
-          created_at: u.created_at.strftime("%Y-%m-%d %H:%M")
-        }
-      end
-      render_page(:users, users: users)
-    end
-
-    # 授权范式：按权限点 system:role:list 判定 + 真实数据注入
-    def roles
-      authorize! Role, to: :index?
-      # IDOR 防线：用 policy_scope 包装查询（超管全量 / 普通按权限过滤，无权限返回空集）
-      roles = policy_scope(Role.all, with: RolePolicy)
-                  .includes(:permissions).order(created_at: :asc).map do |r|
-        {
-          id: r.id,
-          name: r.name,
-          code: r.code,
-          remark: r.description,
-          permissionCount: r.permissions.size,
-          created_at: r.created_at.strftime("%Y-%m-%d %H:%M")
-        }
-      end
-      render_page(:roles, roles: roles)
-    end
-
     def menus
       authorize! nil, to: :view?, with: MenuPolicy
       render_page(:menus)

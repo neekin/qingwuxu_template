@@ -69,8 +69,9 @@ module Admin
       }
     end
 
+    # 前端 ProListPage 发裸 values（无 :department 包裹），用 permit 直接收。
     def department_params
-      params.require(:department).permit(:code, :name, :parent_id, :leader, :sort, :status, :remark)
+      params.permit(:code, :name, :parent_id, :leader, :sort, :status, :remark)
     end
   end
 end

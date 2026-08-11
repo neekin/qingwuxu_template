@@ -5,6 +5,7 @@ require "test_helper"
 module Admin
   # 字典数据项管理控制器：三态验证（未登录跳登录 / 无权限 403 / 超管放行 + 写路径成功失败）
   # index 支持按 dict_type 过滤；create/update/destroy 校验 dict_type 存在。
+  # 前端 ProListPage 发裸 values（无 :dictionary_data 包裹），控制器用 permit 直接收，测试同发裸值。
   class DictionaryDataControllerTest < ActionDispatch::IntegrationTest
     setup do
       @super = User.create!(
@@ -57,7 +58,7 @@ module Admin
     test "未登录创建字典数据项跳登录" do
       get root_path
       post admin_dictionary_data_path,
-           params: { dictionary_data: { dict_type: @type.code, label: "男", value: "0" } },
+           params: { dict_type: @type.code, label: "男", value: "0" },
            headers: { "X-CSRF-Token" => csrf_token }
       assert_redirected_to admin_login_path
     end
@@ -66,7 +67,7 @@ module Admin
       login_as(@guest)
       get root_path
       post admin_dictionary_data_path,
-           params: { dictionary_data: { dict_type: @type.code, label: "男", value: "0" } },
+           params: { dict_type: @type.code, label: "男", value: "0" },
            headers: { "X-CSRF-Token" => csrf_token }
       assert_response :forbidden
     end
@@ -76,7 +77,7 @@ module Admin
       get root_path
       assert_difference -> { DictionaryData.count }, 1 do
         post admin_dictionary_data_path,
-             params: { dictionary_data: { dict_type: @type.code, label: "男", value: "0" } },
+             params: { dict_type: @type.code, label: "男", value: "0" },
              headers: { "X-CSRF-Token" => csrf_token }
       end
       assert_redirected_to admin_dictionary_data_path(dict_type: @type.code)
@@ -87,7 +88,7 @@ module Admin
       get root_path
       assert_no_difference -> { DictionaryData.count } do
         post admin_dictionary_data_path,
-             params: { dictionary_data: { dict_type: "nope", label: "男", value: "0" } },
+             params: { dict_type: "nope", label: "男", value: "0" },
              headers: { "X-CSRF-Token" => csrf_token }
       end
       assert_response :unprocessable_entity
@@ -99,7 +100,7 @@ module Admin
       item = DictionaryData.create!(dict_type: @type.code, label: "男", value: "0")
       get root_path
       put admin_dictionary_datum_path(item),
-          params: { dictionary_data: { label: "女性" } },
+          params: { label: "女性" },
           headers: { "X-CSRF-Token" => csrf_token }
       assert_redirected_to admin_dictionary_data_path(dict_type: @type.code)
       assert_equal "女性", item.reload.label

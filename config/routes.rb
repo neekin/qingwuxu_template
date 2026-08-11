@@ -10,8 +10,10 @@ Rails.application.routes.draw do
   namespace :admin do
     root 'pages#dashboard'
     get 'dashboard', to: 'pages#dashboard'
-    get 'users', to: 'pages#users'
-    get 'roles', to: 'pages#roles'
+    # 用户管理（真实 REST，含 POST/PUT/DELETE 写路径）
+    resources :users, only: [:index, :create, :update, :destroy]
+    # 角色管理（真实 REST，含 POST/PUT/DELETE 写路径）
+    resources :roles, only: [:index, :create, :update, :destroy]
     get 'menus', to: 'pages#menus'
     get 'operation-logs', to: 'pages#operation_logs'
     get 'login-logs', to: 'pages#login_logs'

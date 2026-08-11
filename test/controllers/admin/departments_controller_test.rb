@@ -4,6 +4,7 @@ require "test_helper"
 
 module Admin
   # 部门管理控制器：三态验证（未登录跳登录 / 无权限 403 / 超管放行 + 写路径成功失败）
+  # 前端 ProListPage 发裸 values（无 :department 包裹），控制器用 permit 直接收，测试同发裸值。
   class DepartmentsControllerTest < ActionDispatch::IntegrationTest
     setup do
       @super = User.create!(
@@ -43,7 +44,7 @@ module Admin
     test "未登录创建部门跳登录" do
       get root_path
       post admin_departments_path,
-           params: { department: { code: "d1", name: "测试部" } },
+           params: { code: "d1", name: "测试部" },
            headers: { "X-CSRF-Token" => csrf_token }
       assert_redirected_to admin_login_path
     end
@@ -52,7 +53,7 @@ module Admin
       login_as(@guest)
       get root_path
       post admin_departments_path,
-           params: { department: { code: "d1", name: "测试部" } },
+           params: { code: "d1", name: "测试部" },
            headers: { "X-CSRF-Token" => csrf_token }
       assert_response :forbidden
     end
@@ -62,7 +63,7 @@ module Admin
       get root_path
       assert_difference -> { Department.count }, 1 do
         post admin_departments_path,
-             params: { department: { code: "d1", name: "测试部" } },
+             params: { code: "d1", name: "测试部" },
              headers: { "X-CSRF-Token" => csrf_token }
       end
       assert_redirected_to admin_departments_path
@@ -73,7 +74,7 @@ module Admin
       get root_path
       assert_no_difference -> { Department.count } do
         post admin_departments_path,
-             params: { department: { code: "", name: "" } },
+             params: { code: "", name: "" },
              headers: { "X-CSRF-Token" => csrf_token }
       end
       assert_response :unprocessable_entity
@@ -85,7 +86,7 @@ module Admin
       dept = Department.create!(code: "u1", name: "原部门")
       get root_path
       put admin_department_path(dept),
-          params: { department: { name: "改部门" } },
+          params: { name: "改部门" },
           headers: { "X-CSRF-Token" => csrf_token }
       assert_redirected_to admin_departments_path
       assert_equal "改部门", dept.reload.name
@@ -96,7 +97,7 @@ module Admin
       dept = Department.create!(code: "u2", name: "原部门")
       get root_path
       put admin_department_path(dept),
-          params: { department: { code: "" } },
+          params: { code: "" },
           headers: { "X-CSRF-Token" => csrf_token }
       assert_response :unprocessable_entity
     end

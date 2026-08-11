@@ -36,7 +36,13 @@ rbac_permissions = [
   %w[dashboard:view 仪表盘查看 dashboard],
   %w[system:manage 系统管理 system],
   %w[system:user:list 用户管理 system/user],
+  %w[system:user:create 用户新增 system/user],
+  %w[system:user:edit 用户编辑 system/user],
+  %w[system:user:delete 用户删除 system/user],
   %w[system:role:list 角色管理 system/role],
+  %w[system:role:create 角色新增 system/role],
+  %w[system:role:edit 角色编辑 system/role],
+  %w[system:role:delete 角色删除 system/role],
   %w[system:menu:list 菜单管理 system/menu],
   %w[system:dept:list 部门管理 system/dept],
   %w[system:dept:create 部门新增 system/dept],
@@ -72,8 +78,10 @@ Permission.pluck(:id).each do |pid|
 end
 
 # admin 绑定部分权限（演示分权，不含 system:menu:list）
-%w[dashboard:view system:manage system:user:list system:role:list system:dept:list
-   system:dept:create system:dept:edit system:dept:delete
+%w[dashboard:view system:manage
+   system:user:list system:user:create system:user:edit system:user:delete
+   system:role:list system:role:create system:role:edit system:role:delete
+   system:dept:list system:dept:create system:dept:edit system:dept:delete
    monitor:manage monitor:operlog:list monitor:loginlog:list user:profile:view].each do |code|
   perm = perm_by_code[code]
   next unless perm
