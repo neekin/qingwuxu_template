@@ -78,6 +78,7 @@ module Admin
       )
       if user.save
         log_in(user)
+        record_login_log(user: user, login_type: "register", status: "success")
         redirect_to admin_root_path
       else
         render inertia: "admin/register/index", props: { error: user.errors.full_messages.join("；") }
@@ -98,10 +99,15 @@ module Admin
       password = params[:password].to_s
       user = User.find_for_login(account)
       if user&.authenticate(password)
-        return render(inertia: "admin/login/index", props: { error: "账号已被禁用" }) if user.disabled?
+        if user.disabled?
+          record_login_log(user: user, login_type: "password", status: "fail", message: "账号已被禁用")
+          return render(inertia: "admin/login/index", props: { error: "账号已被禁用" })
+        end
         log_in(user)
+        record_login_log(user: user, login_type: "password", status: "success")
         redirect_to admin_root_path
       else
+        record_login_log(user: user, login_type: "password", status: "fail", message: "账号或密码错误")
         render inertia: "admin/login/index", props: { error: "账号或密码错误" }
       end
     end
@@ -110,12 +116,14 @@ module Admin
       phone = params[:phone].to_s.strip
       code = params[:code].to_s.strip
       unless phone.match?(/\A1[3-9]\d{9}\z/)
+        record_login_log(user: nil, login_type: "sms", status: "fail", message: "手机号格式不正确")
         return render(inertia: "admin/login/index", props: { error: "手机号格式不正确" })
       end
 
       vc = VerificationCode.where(receiver: phone, channel: "sms", purpose: "login", used_at: nil)
                            .where("expires_at > ?", Time.current).order(created_at: :desc).first
       unless vc && vc.verify?(code)
+        record_login_log(user: nil, login_type: "sms", status: "fail", message: "验证码错误或已失效")
         return render(inertia: "admin/login/index", props: { error: "验证码错误或已失效" })
       end
 
@@ -126,9 +134,13 @@ module Admin
         uname = "m#{phone}_#{SecureRandom.hex(2)}" while User.exists?(username: uname)
         user = User.create!(username: uname, phone: phone, status: :enabled)
       end
-      return render(inertia: "admin/login/index", props: { error: "账号已被禁用" }) if user.disabled?
+      if user.disabled?
+        record_login_log(user: user, login_type: "sms", status: "fail", message: "账号已被禁用")
+        return render(inertia: "admin/login/index", props: { error: "账号已被禁用" })
+      end
 
       log_in(user)
+      record_login_log(user: user, login_type: "sms", status: "success")
       redirect_to admin_root_path
     end
 
@@ -150,6 +162,21 @@ module Admin
       return receiver.match?(/\A1[3-9]\d{9}\z/) if channel == "sms"
       return receiver.match?(URI::MailTo::EMAIL_REGEXP) if channel == "email"
       false
+    end
+
+    # 记录登录日志（成败均记；user 为 nil 表示未知账号/失败场景）。
+    def record_login_log(user:, login_type:, status:, message: nil)
+      LoginLog.create!(
+        user: user,
+        username: user&.username || params[:account].presence || params[:phone].presence,
+        ip: request.remote_ip,
+        user_agent: request.user_agent,
+        login_type: login_type,
+        status: status,
+        message: message
+      )
+    rescue StandardError => e
+      Rails.logger.warn "登录日志写入失败：#{e.message}"
     end
   end
 end

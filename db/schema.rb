@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_000002) do
   create_table "departments", force: :cascade do |t|
     t.string "ancestors"
     t.string "code", null: false
@@ -49,6 +49,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_020000) do
     t.index ["code"], name: "index_dictionary_types_on_code", unique: true
   end
 
+  create_table "login_logs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "ip"
+    t.string "login_type"
+    t.text "message"
+    t.string "status", default: "success", null: false
+    t.datetime "updated_at", null: false
+    t.text "user_agent"
+    t.integer "user_id"
+    t.string "username"
+    t.index ["created_at"], name: "index_login_logs_on_created_at"
+    t.index ["user_id"], name: "index_login_logs_on_user_id"
+  end
+
   create_table "login_sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip"
@@ -74,6 +88,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_020000) do
     t.integer "status", default: 1, null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "index_menus_on_parent_id"
+  end
+
+  create_table "operation_logs", force: :cascade do |t|
+    t.string "action"
+    t.integer "admin_user_id"
+    t.datetime "created_at", null: false
+    t.integer "duration_ms"
+    t.string "ip"
+    t.text "message"
+    t.string "path"
+    t.string "request_method"
+    t.string "status", default: "success", null: false
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.string "username"
+    t.index ["admin_user_id"], name: "index_operation_logs_on_admin_user_id"
+    t.index ["created_at"], name: "index_operation_logs_on_created_at"
   end
 
   create_table "permissions", force: :cascade do |t|
@@ -145,8 +176,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_020000) do
     t.index ["receiver", "channel", "purpose"], name: "index_verification_codes_on_receiver_and_channel_and_purpose"
   end
 
+  add_foreign_key "login_logs", "users", on_delete: :nullify
   add_foreign_key "login_sessions", "users", on_delete: :cascade
   add_foreign_key "menus", "menus", column: "parent_id", on_delete: :cascade
+  add_foreign_key "operation_logs", "users", column: "admin_user_id", on_delete: :nullify
   add_foreign_key "role_permissions", "permissions", on_delete: :cascade
   add_foreign_key "role_permissions", "roles", on_delete: :cascade
   add_foreign_key "user_roles", "roles", on_delete: :cascade

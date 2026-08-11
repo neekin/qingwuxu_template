@@ -14,16 +14,6 @@ module Admin
       render_page(:menus)
     end
 
-    def operation_logs
-      authorize! nil, to: :view?, with: OperationLogPolicy
-      render_page(:operation_logs)
-    end
-
-    def login_logs
-      authorize! nil, to: :view?, with: LoginLogPolicy
-      render_page(:login_logs)
-    end
-
     def profile
       authorize! nil, to: :view?, with: ProfilePolicy
       render_page(:profile)
