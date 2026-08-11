@@ -1,0 +1,348 @@
+<% content_for :title, "青乌序 · 框架结构与使用说明" %>
+
+<%# ============ 顶部导航 ============ %>
+<header class="sticky top-0 z-50 border-b border-white/10 bg-primary-700/95 backdrop-blur supports-[backdrop-filter]:bg-primary-700/80">
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+    <a href="<%= root_path %>" class="flex items-center gap-2 text-white">
+      <span class="grid h-8 w-8 place-items-center rounded-md bg-accent text-sm font-bold">青</span>
+      <span class="text-lg font-semibold tracking-wide">青乌序</span>
+    </a>
+    <nav class="hidden items-center gap-6 text-sm text-white/80 md:flex">
+      <a href="#stack" class="transition hover:text-white">技术基线</a>
+      <a href="#architecture" class="transition hover:text-white">两脉并行</a>
+      <a href="#structure" class="transition hover:text-white">目录结构</a>
+      <a href="#rbac" class="transition hover:text-white">权限模型</a>
+      <a href="#usage" class="transition hover:text-white">使用说明</a>
+      <a href="#generator" class="transition hover:text-white">代码生成器</a>
+    </nav>
+    <%= link_to "进入后台 →", admin_login_path, data: { turbo: false },
+          class: "rounded-md bg-white px-4 py-2 text-sm font-semibold text-primary-700 shadow-sm transition hover:bg-ink-50" %>
+  </div>
+</header>
+
+<%# ============ Hero ============ %>
+<section class="relative overflow-hidden bg-gradient-to-br from-primary via-primary-600 to-primary-700 text-white">
+  <div class="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-accent/30 blur-3xl"></div>
+  <div class="relative mx-auto max-w-6xl px-6 py-20 lg:py-24">
+    <span class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm text-white/90">
+      <span class="h-2 w-2 rounded-full bg-accent"></span>
+      框架说明 · 最后更新 2026-08-11
+    </span>
+    <h1 class="mt-6 max-w-3xl text-4xl font-bold leading-tight tracking-tight lg:text-5xl">
+      青乌序框架：结构、用法与代码生成器蓝图
+    </h1>
+    <p class="mt-5 max-w-2xl text-lg text-white/80">
+      Rails 8 单体二开框架，对标若依。前台 Hotwire 利 SEO，后台 Inertia + React + Ant Design Pro；
+      以 RBAC 为经、代码生成为纬、设计系统为皮。本页为框架的「活文档」，结构 / 用法 / 生成器有任何变动须同步维护。
+    </p>
+    <div class="mt-8 flex flex-wrap items-center gap-4">
+      <a href="#architecture" class="rounded-md bg-white px-6 py-3 text-base font-semibold text-primary-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-ink-50">
+        查看架构
+      </a>
+      <a href="#usage" class="rounded-md border border-white/30 px-6 py-3 text-base font-semibold text-white transition hover:bg-white/10">
+        快速上手
+      </a>
+    </div>
+  </div>
+</section>
+
+<%# ============ 技术基线 ============ %>
+<section id="stack" class="mx-auto max-w-6xl px-6 py-20">
+  <div class="max-w-2xl">
+    <h2 class="text-3xl font-bold tracking-tight text-ink-900">技术基线</h2>
+    <p class="mt-3 text-ink-700">单体架构，分前后台双栈；构建分轨（非 Vite-only），两套 bundle 严格隔离。</p>
+  </div>
+  <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <%# 卡片 %>
+    <div class="rounded-md border border-ink-100 bg-white p-6 shadow-sm">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-accent">后端</h3>
+      <ul class="mt-3 space-y-1.5 text-sm text-ink-700">
+        <li>Ruby 4.0 · Rails 8.1</li>
+        <li>SQLite（演示）/ 可换 PG·MySQL</li>
+        <li>ActionPolicy 0.7.6（唯一授权）</li>
+        <li>Solid Queue / Cache / Cable（已引入）</li>
+        <li>Active Storage（文件服务）</li>
+        <li>Propshaft 资产管线</li>
+      </ul>
+    </div>
+    <div class="rounded-md border border-ink-100 bg-white p-6 shadow-sm">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-accent">前台（C 端）</h3>
+      <ul class="mt-3 space-y-1.5 text-sm text-ink-700">
+        <li>importmap-rails（零构建）</li>
+        <li>Hotwire：Turbo / Stimulus</li>
+        <li>Tailwind CSS v4（SSR 利 SEO）</li>
+        <li>服务端渲染，首屏直出</li>
+      </ul>
+    </div>
+    <div class="rounded-md border border-ink-100 bg-white p-6 shadow-sm">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-accent">后台（管理端）</h3>
+      <ul class="mt-3 space-y-1.5 text-sm text-ink-700">
+        <li>Vite 3.11（vite_rails）</li>
+        <li>Inertia.js 3.22 + React 19</li>
+        <li>Ant Design 6.5.3（antd）</li>
+        <li>ProTable / ProListPage 封装</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<%# ============ 双栈架构 ============ %>
+<section id="architecture" class="bg-ink-100/60 py-20">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="max-w-2xl">
+      <h2 class="text-3xl font-bold tracking-tight text-ink-900">两脉并行，互不夺气</h2>
+      <p class="mt-3 text-ink-700">前台如明堂开阔利纳气，后台如内室精微利用事——bundle 严格分离，互不污染首屏。</p>
+    </div>
+    <div class="mt-10 grid gap-6 lg:grid-cols-2">
+      <div class="rounded-md border border-ink-100 bg-white p-8">
+        <span class="rounded-md bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">前台 · C 端</span>
+        <h3 class="mt-4 text-xl font-semibold text-ink-900">Hotwire（Turbo / Stimulus）</h3>
+        <p class="mt-2 text-sm text-ink-700">服务端渲染，HTML 直出。Turbo Drive 无刷新导航、Turbo Frames 局部加载、Turbo Streams 服务端推送 DOM。</p>
+        <ul class="mt-4 space-y-2 text-sm text-ink-700">
+          <li class="flex gap-2"><span class="text-accent">›</span> importmap 加载，零构建步骤</li>
+          <li class="flex gap-2"><span class="text-accent">›</span> Tailwind 原子化样式，品牌令牌单一来源</li>
+          <li class="flex gap-2"><span class="text-accent">›</span> 首屏快、利于搜索引擎收录</li>
+        </ul>
+      </div>
+      <div class="rounded-md border border-ink-100 bg-white p-8">
+        <span class="rounded-md bg-accent/10 px-3 py-1 text-sm font-semibold text-accent">后台 · 管理端</span>
+        <h3 class="mt-4 text-xl font-semibold text-ink-900">Inertia.js + React + Ant Design</h3>
+        <p class="mt-2 text-sm text-ink-700">Vite 打包的重交互栈。Ant Design Pro 组件库 + 墨色深侧栏，复杂表单与数据表格开箱即用。</p>
+        <ul class="mt-4 space-y-2 text-sm text-ink-700">
+          <li class="flex gap-2"><span class="text-primary">›</span> Vite 构建，按需打包</li>
+          <li class="flex gap-2"><span class="text-primary">›</span> ProTable / ProCard 高密度布局</li>
+          <li class="flex gap-2"><span class="text-primary">›</span> 与前台 bundle 严格隔离（架构红线 R1 / R6）</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-8 rounded-md border border-primary/20 bg-primary/5 p-6">
+      <h3 class="text-base font-semibold text-primary-700">架构红线（须写进 CI 守护）</h3>
+      <ul class="mt-3 grid gap-2 text-sm text-ink-700 sm:grid-cols-2">
+        <li class="flex gap-2"><span class="text-primary">✓</span> Turbo 仅前台 layout；后台 layout 绝不引入 Turbo / Stimulus</li>
+        <li class="flex gap-2"><span class="text-primary">✓</span> admin bundle 只在 admin layout 加载，不污染前台首屏</li>
+        <li class="flex gap-2"><span class="text-primary">✓</span> 新增后台页必须进 <code>Admin</code> 命名空间（自动套 admin layout）</li>
+        <li class="flex gap-2"><span class="text-primary">✓</span> 前后台跨域链接加 <code>data-turbo="false"</code></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<%# ============ 目录结构 ============ %>
+<section id="structure" class="mx-auto max-w-6xl px-6 py-20">
+  <div class="max-w-2xl">
+    <h2 class="text-3xl font-bold tracking-tight text-ink-900">目录结构（关键路径）</h2>
+    <p class="mt-3 text-ink-700">前后台代码分轨落盘，命名空间即边界。</p>
+  </div>
+  <div class="mt-10 grid gap-6 lg:grid-cols-2">
+    <div class="overflow-hidden rounded-md border border-ink-100 bg-ink-900 text-ink-100">
+      <div class="border-b border-ink-700 px-4 py-2 text-xs text-ink-300">app/ （Rails 侧）</div>
+      <pre class="overflow-x-auto p-4 text-[13px] leading-relaxed"><code>app/
+├─ controllers/
+│  ├─ admin/            # 后台控制器（Admin 命名空间）
+│  │  ├─ base_controller.rb     # 鉴权 + 操作日志自动记录
+│  │  ├─ users_controller.rb    # 用户管理（写路径）
+│  │  ├─ roles_controller.rb    # 角色管理（写路径）
+│  │  ├─ departments_controller.rb
+│  │  ├─ dictionary_*/          # 字典管理
+│  │  ├─ operation_logs_controller.rb  # 只读审计
+│  │  ├─ login_logs_controller.rb
+│  │  └─ sessions_controller.rb # 登录三方式 + 登录日志
+│  └─ welcome_controller.rb     # 前台落地页
+├─ models/              # user/role/permission/.../operation_log/login_log
+├─ policies/            # ActionPolicy（每个资源一个）
+└─ views/
+   ├─ layouts/application.html.erb  # 前台 layout（无 Vite）
+   ├─ layouts/admin.html.erb        # 后台 layout（Vite + antd reset）
+   ├─ welcome/  └─ docs/            # 前台 ERB 页</code></pre>
+    </div>
+    <div class="overflow-hidden rounded-md border border-ink-100 bg-ink-900 text-ink-100">
+      <div class="border-b border-ink-700 px-4 py-2 text-xs text-ink-300">app/frontend/ （Vite 侧）</div>
+      <pre class="overflow-x-auto p-4 text-[13px] leading-relaxed"><code>app/frontend/
+├─ entrypoints/inertia.tsx   # Vite 入口（React 树 + antd ConfigProvider）
+├─ pages/admin/              # Inertia 页面（与路由一一对应）
+│  ├─ users/index.tsx
+│  ├─ roles/index.tsx
+│  ├─ operation_logs/index.tsx
+│  └─ ...
+├─ components/
+│  ├─ ProListPage.tsx        # 列表页模板（data 来自 Inertia props）
+│  └─ AdminPageContainer.tsx  # 后台页容器
+└─ styles/tokens.ts          # 设计令牌（与 tailwind @theme 对齐）</code></pre>
+    </div>
+  </div>
+  <div class="mt-6 overflow-hidden rounded-md border border-ink-100 bg-ink-900 text-ink-100">
+    <div class="border-b border-ink-700 px-4 py-2 text-xs text-ink-300">config/ （关键配置）</div>
+    <pre class="overflow-x-auto p-4 text-[13px] leading-relaxed"><code>config/
+├─ routes.rb     # 前台 root / 后台 namespace :admin
+├─ vite.json     # 前台 dev / 后台 test 构建分轨
+└─ database.yml  # SQLite（演示）→ PG/MySQL 可换
+
+db/migrate/      # 2026-08-07 users → 08 RBAC → 11 双日志</code></pre>
+  </div>
+</section>
+
+<%# ============ RBAC 权限模型 ============ %>
+<section id="rbac" class="bg-ink-100/60 py-20">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="max-w-2xl">
+      <h2 class="text-3xl font-bold tracking-tight text-ink-900">RBAC 权限模型</h2>
+      <p class="mt-3 text-ink-700">五表为骨、ActionPolicy 为魂；最小授权单元是「权限点」，而非角色。</p>
+    </div>
+
+    <div class="mt-10 grid gap-6 lg:grid-cols-2">
+      <div class="rounded-md border border-ink-100 bg-white p-8">
+        <h3 class="text-lg font-semibold text-ink-900">数据模型（6 张核心表）</h3>
+        <ul class="mt-4 space-y-2.5 text-sm text-ink-700">
+          <li><span class="font-medium text-ink-900">users</span> — 用户；<code>belongs_to :department</code>，<code>has_many :roles through :user_roles</code></li>
+          <li><span class="font-medium text-ink-900">roles</span> — 角色；<code>has_many :permissions through :role_permissions</code></li>
+          <li><span class="font-medium text-ink-900">permissions</span> — 权限点（最小授权单元）</li>
+          <li><span class="font-medium text-ink-900">role_permissions</span> — 角色↔权限连接表</li>
+          <li><span class="font-medium text-ink-900">user_roles</span> — 用户↔角色连接表</li>
+          <li><span class="font-medium text-ink-900">menus</span> — 菜单（自引用树 <code>parent/children</code>）</li>
+        </ul>
+        <p class="mt-4 text-sm text-ink-700">三层边界：L1 资源/权限点定义 → L2 角色授权（纯配置）→ L3 用户-角色分配（纯配置）。<span class="text-accent">super_admin</span> 为 user 表布尔标记，<code>ApplicationPolicy</code> 基类短路放行。</p>
+      </div>
+
+      <div class="rounded-md border border-ink-100 bg-white p-8">
+        <h3 class="text-lg font-semibold text-ink-900">授权范式（ActionPolicy）</h3>
+        <p class="mt-2 text-sm text-ink-700">控制器只问「能否做」，policy 永远判权限点码，绝不硬编码角色：</p>
+        <pre class="mt-3 overflow-x-auto rounded bg-ink-900 p-3 text-[12.5px] leading-relaxed text-ink-100"><code># 控制器
+authorize! User, to: :create?
+scope = policy_scope(User)
+
+# policy
+class UserPolicy &lt; ApplicationPolicy
+  def create?
+    user.has_permission?("system:user:add")
+  end
+end</code></pre>
+        <p class="mt-4 text-sm text-ink-700">数据权限引擎 <code>ApplicationPolicy#scope_for</code>：超管直通；普通按 <code>user.data_scope</code> 过滤含 <code>department_id</code> 的资源；<code>dept_and_child</code> 子树用逗号边界精确匹配（禁 <code>'%id%'</code> 模糊，防跨部门越权）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%# ============ 设计系统 ============ %>
+<section id="design" class="mx-auto max-w-6xl px-6 py-20">
+  <div class="max-w-2xl">
+    <h2 class="text-3xl font-bold tracking-tight text-ink-900">统一设计系统</h2>
+    <p class="mt-3 text-ink-700">黛青为脉、赭石为印、墨色为骨；前后台令牌单向对齐，皮相端庄自有章法。</p>
+  </div>
+  <div class="mt-10 flex flex-wrap gap-4">
+    <div class="flex items-center gap-3 rounded-md border border-ink-100 bg-white px-4 py-3 shadow-sm">
+      <span class="h-8 w-8 rounded-md bg-primary"></span>
+      <div><div class="text-sm font-semibold text-ink-900">黛青 · 主色</div><div class="text-xs text-ink-500">#1B6E78</div></div>
+    </div>
+    <div class="flex items-center gap-3 rounded-md border border-ink-100 bg-white px-4 py-3 shadow-sm">
+      <span class="h-8 w-8 rounded-md bg-accent"></span>
+      <div><div class="text-sm font-semibold text-ink-900">赭石 · 强调</div><div class="text-xs text-ink-500">#BF8430</div></div>
+    </div>
+    <div class="flex items-center gap-3 rounded-md border border-ink-100 bg-white px-4 py-3 shadow-sm">
+      <span class="h-8 w-8 rounded-md bg-ink-900"></span>
+      <div><div class="text-sm font-semibold text-ink-900">墨色 · 中性灰阶</div><div class="text-xs text-ink-500">#162024 → #f6f8f8</div></div>
+    </div>
+  </div>
+  <p class="mt-6 text-sm text-ink-700">单一真相：前台令牌在 <code>app/assets/tailwind/application.css</code> 的 <code>@theme {}</code>；后台在 <code>app/frontend/styles/tokens.ts</code>，经 antd <code>ConfigProvider</code> 对接。圆角统一 6px（<code>rounded-md</code>）。antd v6 用法：<code>Card</code> 用 <code>variant</code> 不用 <code>bordered</code>；<code>Modal/Drawer</code> 用 <code>destroyOnHidden</code>；<code>message/modal</code> 用 <code>App.useApp()</code>。</p>
+</section>
+
+<%# ============ 使用说明 ============ %>
+<section id="usage" class="bg-ink-100/60 py-20">
+  <div class="mx-auto max-w-6xl px-6">
+    <div class="max-w-2xl">
+      <h2 class="text-3xl font-bold tracking-tight text-ink-900">使用说明</h2>
+      <p class="mt-3 text-ink-700">从装环境到新增一个后台模块的标准姿势。</p>
+    </div>
+
+    <div class="mt-10 grid gap-6 lg:grid-cols-2">
+      <div class="rounded-md border border-ink-100 bg-white p-8">
+        <h3 class="text-lg font-semibold text-ink-900">安装与开发</h3>
+        <pre class="mt-3 overflow-x-auto rounded bg-ink-900 p-3 text-[12.5px] leading-relaxed text-ink-100"><code># 环境：Ruby 4.0+ · Node 22+ · SQLite
+bundle install
+npm install
+bin/rails db:create db:migrate db:seed
+bin/dev            # Rails + Vite + Tailwind 同起
+
+# 前台 http://localhost:3000 （root）
+# 后台 http://localhost:3000/admin（登录）</code></pre>
+        <p class="mt-4 text-sm text-ink-700">种子账号：<code>admin / 13800000000 / admin123456</code>（用户名 / 手机 / 邮箱 + 密码均可登录）。</p>
+      </div>
+
+      <div class="rounded-md border border-ink-100 bg-white p-8">
+        <h3 class="text-lg font-semibold text-ink-900">测试把关</h3>
+        <pre class="mt-3 overflow-x-auto rounded bg-ink-900 p-3 text-[12.5px] leading-relaxed text-ink-100"><code># 后端：minitest
+bin/rails test
+
+# 前端：类型检查 + 生产构建
+npm run check
+RAILS_ENV=production bin/vite build</code></pre>
+        <p class="mt-4 text-sm text-ink-700">后台 Inertia 页渲染依赖 Vite 资产；CI 须以生产构建产物喂测试环境，避免 test 环境自动构建触发批量删除护栏。</p>
+      </div>
+    </div>
+
+    <div class="mt-6 rounded-md border border-ink-100 bg-white p-8">
+      <h3 class="text-lg font-semibold text-ink-900">新增后台模块标准流程（以「公告 announcements」为例）</h3>
+      <ol class="mt-4 space-y-2.5 text-sm text-ink-700">
+        <li class="flex gap-3"><span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">1</span> 建迁移 + 模型（含 <code>department_id</code> 等数据权限所需列）。</li>
+        <li class="flex gap-3"><span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">2</span> 建 <code>Admin::AnnouncementsController &lt; Admin::BaseController</code>：<code>authorize!</code> + <code>policy_scope</code>；写路径收裸 params（前端 ProListPage 发裸值）；成功 redirect、失败 422 + errors。</li>
+        <li class="flex gap-3"><span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">3</span> 建 <code>AnnouncementPolicy &lt; ApplicationPolicy</code>，永远用权限点码（如 <code>system:announcement:list</code>）判 <code>user.has_permission?</code>。</li>
+        <li class="flex gap-3"><span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">4</span> <code>config/routes.rb</code> 后台命名空间内加 <code>resources :announcements, only: [:index, :create, :update, :destroy]</code>。</li>
+        <li class="flex gap-3"><span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">5</span> 建 <code>app/frontend/pages/admin/announcements/index.tsx</code>，用 <code>ProListPage</code> 封装（<code>data</code> 来自 Inertia props）。</li>
+        <li class="flex gap-3"><span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">6</span> seed 权限点码 + 菜单项（连 <code>menus</code> 表），保证角色可授权、侧栏可见。</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<%# ============ 代码生成器（规划中） ============ %>
+<section id="generator" class="mx-auto max-w-6xl px-6 py-20">
+  <div class="max-w-2xl">
+    <h2 class="text-3xl font-bold tracking-tight text-ink-900">代码生成器</h2>
+    <p class="mt-3 text-ink-700">schema 一推，满盘落子成局——后台 CRUD 与前后台模板一条龙产出。</p>
+  </div>
+
+  <div class="mt-8 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent-600">
+    <span class="h-2 w-2 rounded-full bg-accent"></span>
+    状态：🟡 规划中（P2）· 尚未实现 · 本页将随其落地同步更新为真实用法
+  </div>
+
+  <div class="mt-10 grid gap-6 lg:grid-cols-2">
+    <div class="rounded-md border border-ink-100 bg-white p-8">
+      <h3 class="text-lg font-semibold text-ink-900">设计目标</h3>
+      <p class="mt-2 text-sm text-ink-700">输入数据库 schema 或模型定义，一键产出「可提交」的全栈 CRUD 脚手架，风格与手写代码一致，避免样板搬运。</p>
+      <h4 class="mt-5 text-sm font-semibold text-ink-900">规划产出物</h4>
+      <ul class="mt-3 space-y-2 text-sm text-ink-700">
+        <li class="flex gap-2"><span class="text-accent">›</span> 迁移 + 模型（含关联、数据权限列）</li>
+        <li class="flex gap-2"><span class="text-accent">›</span> <code>Admin</code> 控制器（<code>authorize!</code> + <code>policy_scope</code>，裸 params 写路径）</li>
+        <li class="flex gap-2"><span class="text-accent">›</span> ActionPolicy（权限点码范式）</li>
+        <li class="flex gap-2"><span class="text-accent">›</span> 路由 <code>resources</code>（后台命名空间内）</li>
+        <li class="flex gap-2"><span class="text-accent">›</span> Inertia 页面 + <code>ProListPage</code> 封装（列表/表单字段）</li>
+        <li class="flex gap-2"><span class="text-accent">›</span> seed 权限点码 + 菜单项</li>
+      </ul>
+    </div>
+
+    <div class="rounded-md border border-ink-100 bg-white p-8">
+      <h3 class="text-lg font-semibold text-ink-900">设计要点（复用既有范式）</h3>
+      <ul class="mt-3 space-y-2.5 text-sm text-ink-700">
+        <li class="flex gap-2"><span class="text-primary">✓</span> 生成代码遵循「裸 params 收值、权限点码判权、ProListPage 接 props」</li>
+        <li class="flex gap-2"><span class="text-primary">✓</span> 自动套 <code>Admin</code> 命名空间，命中架构红线 R1 / R6</li>
+        <li class="flex gap-2"><span class="text-primary">✓</span> 字段映射：字符串→输入框、枚举→下拉、关联→选择、时间→日期</li>
+        <li class="flex gap-2"><span class="text-primary">✓</span> 生成即过 <code>bin/rails test</code> + <code>npm run check</code>，可直接提交</li>
+      </ul>
+      <p class="mt-5 rounded bg-ink-50 p-3 text-sm text-ink-600">跟踪：见项目已知缺口清单 #6（P2 远期）。落地后本页「代码生成器」小节将替换为真实命令与示例。</p>
+    </div>
+  </div>
+</section>
+
+<%# ============ 页脚 ============ %>
+<footer class="bg-ink-900 text-white/70">
+  <div class="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-2 text-white">
+      <span class="grid h-7 w-7 place-items-center rounded-md bg-accent text-xs font-bold">青</span>
+      <span class="font-semibold tracking-wide">青乌序 QingWuXu</span>
+    </div>
+    <p class="text-sm">Rails 8 · Hotwire + Inertia · Ant Design Pro</p>
+    <p class="text-sm">气乘风散，脉遇水止</p>
+    <p class="text-sm">© <%= Time.current.year %> 青乌序 · 框架说明页</p>
+  </div>
+</footer>

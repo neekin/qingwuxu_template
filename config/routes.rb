@@ -4,6 +4,8 @@ Rails.application.routes.draw do
   root "welcome#index"
   get "welcome/clock", to: "welcome#clock", as: :clock
   post "welcome/messages", to: "welcome#messages", as: :messages
+  # 框架说明页（结构 / 使用说明 / 代码生成器蓝图），随框架演进同步维护
+  get "docs", to: "docs#index", as: :docs
 
   # 后台登录（走 admin 命名空间 → Inertia/React 栈，与前台 Tailwind/Stimulus 隔离）
   # 先不管验权：create 为演示重定向，四期回填 ActionPolicy 真实校验。
