@@ -26,7 +26,7 @@
   <div class="relative mx-auto max-w-6xl px-6 py-20 lg:py-24">
     <span class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm text-white/90">
       <span class="h-2 w-2 rounded-full bg-accent"></span>
-      框架说明 · 最后更新 2026-08-11
+      框架说明 · 最后更新 2026-08-12
     </span>
     <h1 class="mt-6 max-w-3xl text-4xl font-bold leading-tight tracking-tight lg:text-5xl">
       青乌序框架：结构、用法与代码生成器蓝图
@@ -291,6 +291,15 @@ RAILS_ENV=production bin/vite build</code></pre>
         <li class="flex gap-3"><span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">6</span> seed 权限点码 + 菜单项（连 <code>menus</code> 表），保证角色可授权、侧栏可见。</li>
       </ol>
     </div>
+  </div>
+
+  <div class="mt-6 rounded-md border border-primary/20 bg-primary/5 p-8">
+    <h3 class="text-lg font-semibold text-primary-700">系统内置模块（已落地）</h3>
+    <ul class="mt-4 space-y-2.5 text-sm text-ink-700">
+      <li class="flex gap-2"><span class="text-primary">✓</span> <strong>文件管理</strong>（本地磁盘 Active Storage）：后台「系统管理 → 文件管理」。上传（Inertia 多部件）/ 列表 / 预览 / 下载 / 删除；权限点 <code>system:file:list / upload / delete</code>，超管短路放行，操作日志自动记录。</li>
+      <li class="flex gap-2"><span class="text-primary">✓</span> 服务监控（Solid Queue / Cache / Cable 总览 + 应用指标）、定时任务、在线用户、操作 / 登录双日志等，见后台「系统监控」目录。</li>
+    </ul>
+    <p class="mt-4 rounded bg-ink-50 p-3 text-sm text-ink-600">文件本体存于 <code>storage/</code>（dev/prod 均用 <code>:local</code> 磁盘后端），元数据经 Active Storage blob 重定向 URL 提供预览 / 下载。</p>
   </div>
 </section>
 
