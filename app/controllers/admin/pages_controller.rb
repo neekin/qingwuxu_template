@@ -9,11 +9,6 @@ module Admin
       render_page(:dashboard)
     end
 
-    def menus
-      authorize! nil, to: :view?, with: MenuPolicy
-      render_page(:menus)
-    end
-
     def profile
       authorize! nil, to: :view?, with: ProfilePolicy
       render_page(:profile)

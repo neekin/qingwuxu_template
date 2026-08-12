@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react'
+import { Head, usePage } from '@inertiajs/react'
 import { Tag } from 'antd'
 import AdminLayout from '../../../layouts/AdminLayout'
 import AdminPageContainer from '../../../components/AdminPageContainer'
@@ -8,86 +8,110 @@ import type { ProColumns } from '@ant-design/pro-components'
 
 type Menu = {
   id: number
-  title: string
-  type: 'catalog' | 'menu' | 'button'
-  path: string
-  permission: string
+  name: string
+  route: string
+  permission_code: string
+  menu_type: 'catalog' | 'menu' | 'button'
+  status: 'visible' | 'hidden'
+  icon: string
+  component: string
+  parent_id: number | null
+  parent_name?: string
   sort: number
-  status: 'enabled' | 'disabled'
 }
 
-const typeMap: Record<Menu['type'], { text: string; color: string }> = {
+type Option = { id: number; name: string }
+
+const typeMap: Record<Menu['menu_type'], { text: string; color: string }> = {
   catalog: { text: '目录', color: 'default' },
   menu: { text: '菜单', color: 'blue' },
   button: { text: '按钮', color: 'geekblue' },
 }
 
-const mockData: Menu[] = [
-  { id: 1, title: '系统管理', type: 'catalog', path: '/admin/system', permission: 'system:manage', sort: 1, status: 'enabled' },
-  { id: 2, title: '用户管理', type: 'menu', path: '/admin/users', permission: 'system:user:list', sort: 1, status: 'enabled' },
-  { id: 3, title: '角色管理', type: 'menu', path: '/admin/roles', permission: 'system:role:list', sort: 2, status: 'enabled' },
-  { id: 4, title: '菜单管理', type: 'menu', path: '/admin/menus', permission: 'system:menu:list', sort: 3, status: 'enabled' },
-  { id: 5, title: '部门管理', type: 'menu', path: '/admin/departments', permission: 'system:dept:list', sort: 4, status: 'enabled' },
-  { id: 6, title: '新增用户', type: 'button', path: '', permission: 'system:user:add', sort: 1, status: 'enabled' },
-  { id: 7, title: '系统监控', type: 'catalog', path: '/admin/monitor', permission: 'monitor:manage', sort: 2, status: 'enabled' },
-  { id: 8, title: '操作日志', type: 'menu', path: '/admin/operation-logs', permission: 'monitor:operlog:list', sort: 1, status: 'enabled' },
-  { id: 9, title: '登录日志', type: 'menu', path: '/admin/login-logs', permission: 'monitor:loginlog:list', sort: 2, status: 'enabled' },
-  { id: 10, title: '个人中心', type: 'menu', path: '/admin/profile', permission: 'user:profile:view', sort: 3, status: 'enabled' },
-  { id: 11, title: '测试菜单', type: 'menu', path: '/admin/test', permission: 'test:list', sort: 5, status: 'disabled' },
-]
-
 const columns: ProColumns<Menu>[] = [
-  { title: '菜单名称', dataIndex: 'title', search: true },
+  { title: '菜单名称', dataIndex: 'name', search: true },
   {
     title: '类型',
-    dataIndex: 'type',
-    render: (_, r) => <Tag color={typeMap[r.type].color}>{typeMap[r.type].text}</Tag>,
+    dataIndex: 'menu_type',
+    render: (_, r) => <Tag color={typeMap[r.menu_type].color}>{typeMap[r.menu_type].text}</Tag>,
   },
-  { title: '路由地址', dataIndex: 'path', ellipsis: true },
-  { title: '权限字符', dataIndex: 'permission', ellipsis: true },
+  { title: '路由地址', dataIndex: 'route', ellipsis: true },
+  { title: '权限字符', dataIndex: 'permission_code', ellipsis: true },
+  {
+    title: '上级',
+    dataIndex: 'parent_name',
+    search: false,
+    render: (_, r) => (r.parent_name ? <Tag>{r.parent_name}</Tag> : <Tag>—</Tag>),
+  },
   { title: '排序', dataIndex: 'sort' },
   {
     title: '状态',
     dataIndex: 'status',
-    render: (_, r) => <Tag color={r.status === 'enabled' ? 'success' : 'error'}>{r.status === 'enabled' ? '启用' : '禁用'}</Tag>,
+    render: (_, r) => (
+      <Tag color={r.status === 'visible' ? 'success' : 'default'}>
+        {r.status === 'visible' ? '显示' : '隐藏'}
+      </Tag>
+    ),
   },
 ]
 
-const formItems = (
-  <>
-    <ProFormText name="title" label="菜单名称" rules={[{ required: true, message: '请输入菜单名称' }]} />
-    <ProFormSelect
-      name="type"
-      label="类型"
-      initialValue="menu"
-      options={[
-        { value: 'catalog', label: '目录' },
-        { value: 'menu', label: '菜单' },
-        { value: 'button', label: '按钮' },
-      ]}
-    />
-    <ProFormText name="path" label="路由地址" />
-    <ProFormText name="permission" label="权限字符" />
-    <ProFormDigit name="sort" label="排序" initialValue={1} />
-    <ProFormSelect
-      name="status"
-      label="状态"
-      initialValue="enabled"
-      options={[
-        { value: 'enabled', label: '启用' },
-        { value: 'disabled', label: '禁用' },
-      ]}
-    />
-  </>
-)
+const MenusPage = () => {
+  const page = usePage()
+  const props = page.props as Record<string, unknown>
+  const menus = (props.menus as Menu[]) || []
+  const allMenus = (props.all_menus as Option[]) || []
 
-export default function MenusPage() {
+  // 编辑时回填父级（formItemsFor 机制注入 record）
+  const formItemsFor = (_record?: Menu) => (
+    <>
+      <ProFormText name="name" label="菜单名称" rules={[{ required: true, message: '请输入菜单名称' }]} />
+      <ProFormSelect
+        name="menu_type"
+        label="类型"
+        initialValue="menu"
+        options={[
+          { value: 'catalog', label: '目录' },
+          { value: 'menu', label: '菜单' },
+          { value: 'button', label: '按钮' },
+        ]}
+      />
+      <ProFormText name="route" label="路由地址" placeholder="如 /admin/users" />
+      <ProFormText name="permission_code" label="权限字符" placeholder="如 system:menu:list" />
+      <ProFormSelect
+        name="parent_id"
+        label="上级菜单"
+        allowClear
+        options={allMenus.map((m) => ({ value: m.id, label: m.name }))}
+      />
+      <ProFormText name="icon" label="图标" placeholder="如 MenuOutlined" />
+      <ProFormText name="component" label="组件路径" placeholder="可选" />
+      <ProFormDigit name="sort" label="排序" initialValue={0} />
+      <ProFormSelect
+        name="status"
+        label="状态"
+        initialValue="visible"
+        options={[
+          { value: 'visible', label: '显示' },
+          { value: 'hidden', label: '隐藏' },
+        ]}
+      />
+    </>
+  )
+
   return (
     <AdminLayout>
       <Head title="菜单管理" />
       <AdminPageContainer title="菜单管理">
-        <ProListPage<Menu> rowKey="id" columns={columns} mockData={mockData} formItems={formItems} />
+        <ProListPage<Menu>
+          rowKey="id"
+          columns={columns}
+          data={menus}
+          apiBase="/admin/menus"
+          formItemsFor={formItemsFor}
+        />
       </AdminPageContainer>
     </AdminLayout>
   )
 }
+
+export default MenusPage
