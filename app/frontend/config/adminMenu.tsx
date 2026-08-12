@@ -6,6 +6,7 @@ import {
   MenuOutlined,
   ApartmentOutlined,
   FileTextOutlined,
+  FolderOpenOutlined,
   HistoryOutlined,
   IdcardOutlined,
   ExperimentOutlined,
@@ -51,6 +52,7 @@ export const adminMenu: AdminMenuItem[] = [
       { key: 'roles', label: '角色管理', icon: <TeamOutlined />, path: '/admin/roles', permission: 'system:role:list' },
       { key: 'menus', label: '菜单管理', icon: <MenuOutlined />, path: '/admin/menus', permission: 'system:menu:list' },
       { key: 'departments', label: '部门管理', icon: <ApartmentOutlined />, path: '/admin/departments', permission: 'system:dept:list' },
+      { key: 'files', label: '文件管理', icon: <FolderOpenOutlined />, path: '/admin/files', permission: 'system:file:list' },
       {
         key: 'dict',
         label: '字典管理',

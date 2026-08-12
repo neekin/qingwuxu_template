@@ -33,6 +33,8 @@ Rails.application.routes.draw do
     resources :solid_queue_jobs, only: [:index]
     # 系统监控看板（只读总览：Solid 三件套 + 应用指标）
     get "system_monitor", to: "system_monitor#index"
+    # 文件管理（P1-D：本地磁盘 Active Storage）：列表 / 上传 / 删除
+    resources :files, only: [:index, :create, :destroy]
     get 'login', to: 'sessions#new', as: :login
     post 'login', to: 'sessions#create'
     post 'login/send_code', to: 'sessions#send_code', as: :login_send_code

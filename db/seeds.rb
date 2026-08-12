@@ -167,6 +167,31 @@ end
 end
 seed_menu("online-users", "在线用户", :menu, route: "/admin/online_users", permission_code: "system:online:list", icon: "LogoutOutlined", sort: 3, parent_id: mon.id)
 
+# 文件管理（P1-D）：本地磁盘 Active Storage 文件服务。
+rbac_permissions += [
+  %w[system:file:list 文件管理 system/file],
+  %w[system:file:upload 文件上传 system/file],
+  %w[system:file:delete 文件删除 system/file],
+]
+# 重新注册新权限码（幂等），确保 Permission 表含文件管理相关权限点。
+rbac_permissions.uniq.each do |(code, name, resource)|
+  perm_by_code[code] = Permission.find_or_create_by!(code: code) do |p|
+    p.name = name
+    p.resource = resource
+  end
+end
+# 新权限点同步授权给 super_admin（全量绑定）。
+Permission.pluck(:id).each do |pid|
+  RolePermission.find_or_create_by!(role_id: super_admin_role.id, permission_id: pid)
+end
+# admin 角色也授予文件管理权限（查看 + 上传 + 删除）。
+%w[system:file:list system:file:upload system:file:delete].each do |code|
+  perm = perm_by_code[code]
+  next unless perm
+  RolePermission.find_or_create_by!(role_id: admin_role.id, permission_id: perm.id)
+end
+seed_menu("files", "文件管理", :menu, route: "/admin/files", permission_code: "system:file:list", icon: "FolderOpenOutlined", sort: 6, parent_id: sys.id)
+
 # 默认 admin 用户绑定超级管理员角色
 if (admin_user = User.find_by(username: "admin"))
   UserRole.find_or_create_by!(user_id: admin_user.id, role_id: super_admin_role.id)
