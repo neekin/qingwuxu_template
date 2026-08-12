@@ -26,6 +26,9 @@ class User < ApplicationRecord
   # ---- 部门关联（P1 第二批：数据权限按 department_id 过滤）----
   belongs_to :department, optional: true
 
+  # ---- 头像（P2 个人中心：Active Storage 本地磁盘，复用框架文件服务方案）----
+  has_one_attached :avatar
+
   # ---- 在线会话（P1 第一批末项：在线用户监控 + 强制下线）----
   has_many :login_sessions, dependent: :destroy
 

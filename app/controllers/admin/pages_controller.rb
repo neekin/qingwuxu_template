@@ -9,11 +9,6 @@ module Admin
       render_page(:dashboard)
     end
 
-    def profile
-      authorize! nil, to: :view?, with: ProfilePolicy
-      render_page(:profile)
-    end
-
     private
 
     # 将请求转发到 app/frontend/pages/admin/<name>/index.tsx

@@ -18,7 +18,10 @@ Rails.application.routes.draw do
     resources :roles, only: [:index, :create, :update, :destroy]
     # 菜单管理（真实 REST，含 POST/PUT/DELETE 写路径）
     resources :menus, only: [:index, :create, :update, :destroy]
-    get 'profile', to: 'pages#profile'
+    # 个人中心（真实 CRUD：资料更新 + 改密码，登录态即可，不判 system:* 写权限）
+    resource :profile, only: [:show, :update] do
+      put :change_password, on: :member
+    end
     # 操作日志 / 登录日志（只读审计视图；记录分别由 BaseController 自动写入 / SessionsController 登录时写入）
     resources :operation_logs, only: [:index]
     resources :login_logs, only: [:index]
