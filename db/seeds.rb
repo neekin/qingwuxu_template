@@ -51,6 +51,7 @@ rbac_permissions = [
   %w[monitor:manage 系统监控 monitor],
   %w[monitor:operlog:list 操作日志 monitor/operlog],
   %w[monitor:loginlog:list 登录日志 monitor/loginlog],
+  %w[monitor:job:list 定时任务监控 monitor/job],
   %w[user:profile:view 个人中心 user/profile],
 ]
 perm_by_code = rbac_permissions.each_with_object({}) do |(code, name, resource), acc|
@@ -110,6 +111,7 @@ seed_menu("departments", "部门管理", :menu, route: "/admin/departments", per
 mon = seed_menu("monitor", "系统监控", :catalog, permission_code: "monitor:manage", icon: "FileTextOutlined", sort: 3)
 seed_menu("operation-logs", "操作日志", :menu, route: "/admin/operation-logs", permission_code: "monitor:operlog:list", icon: "FileTextOutlined", sort: 1, parent_id: mon.id)
 seed_menu("login-logs", "登录日志", :menu, route: "/admin/login-logs", permission_code: "monitor:loginlog:list", icon: "HistoryOutlined", sort: 2, parent_id: mon.id)
+seed_menu("solid-queue-jobs", "定时任务", :menu, route: "/admin/solid_queue_jobs", permission_code: "monitor:job:list", icon: "ScheduleOutlined", sort: 3, parent_id: mon.id)
 seed_menu("profile", "个人中心", :menu, route: "/admin/profile", permission_code: "user:profile:view", icon: "IdcardOutlined", sort: 4)
 seed_menu("inertia-example", "Inertia 演示", :menu, route: "/admin/inertia-example", icon: "ExperimentOutlined", sort: 5)
 

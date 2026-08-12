@@ -13,3 +13,16 @@ production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+
+# 示例定时任务（P1-B）：每天凌晨 3 点清理 90 天前的登录日志。
+# 本地开发可用 `bin/jobs` 启动 Solid Queue 调度器触发；或手动：
+#   CleanupExpiredLoginLogsJob.perform_later
+development:
+  cleanup_expired_login_logs:
+    class: CleanupExpiredLoginLogsJob
+    args: [ retention_days: 90 ]
+    queue: default
+    schedule: every day at 3:00am
+
+test:
+  # 测试环境不挂定时任务（避免副作用），仅保留手动 perform_later 路径。

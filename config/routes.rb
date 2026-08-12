@@ -29,6 +29,8 @@ Rails.application.routes.draw do
     resources :departments, only: [:index, :create, :update, :destroy]
     # 在线用户（监控视图：列出在线会话 + 强制下线）
     resources :online_users, only: [:index, :destroy]
+    # Solid Queue 任务监控（只读）
+    resources :solid_queue_jobs, only: [:index]
     get 'login', to: 'sessions#new', as: :login
     post 'login', to: 'sessions#create'
     post 'login/send_code', to: 'sessions#send_code', as: :login_send_code
