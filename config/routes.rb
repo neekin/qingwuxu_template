@@ -31,6 +31,8 @@ Rails.application.routes.draw do
     resources :online_users, only: [:index, :destroy]
     # Solid Queue 任务监控（只读）
     resources :solid_queue_jobs, only: [:index]
+    # 系统监控看板（只读总览：Solid 三件套 + 应用指标）
+    get "system_monitor", to: "system_monitor#index"
     get 'login', to: 'sessions#new', as: :login
     post 'login', to: 'sessions#create'
     post 'login/send_code', to: 'sessions#send_code', as: :login_send_code

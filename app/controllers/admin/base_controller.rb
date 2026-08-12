@@ -27,9 +27,9 @@ module Admin
       @operation_start = Time.current
     end
 
-    # 跳过查看日志/队列监控自身；仅对已登录后台操作记录。
+    # 跳过查看日志/队列监控/系统监控自身；仅对已登录后台操作记录。
     def operation_loggable?
-      %w[operation_logs login_logs solid_queue_jobs].exclude?(controller_name) && logged_in?
+      %w[operation_logs login_logs solid_queue_jobs system_monitor].exclude?(controller_name) && logged_in?
     end
 
     def record_operation_log

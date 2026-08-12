@@ -72,6 +72,7 @@ export const adminMenu: AdminMenuItem[] = [
       { key: 'operation-logs', label: '操作日志', icon: <FileTextOutlined />, path: '/admin/operation-logs', permission: 'monitor:operlog:list' },
       { key: 'login-logs', label: '登录日志', icon: <HistoryOutlined />, path: '/admin/login-logs', permission: 'monitor:loginlog:list' },
       { key: 'solid-queue-jobs', label: '定时任务', icon: <ScheduleOutlined />, path: '/admin/solid_queue_jobs', permission: 'monitor:job:list' },
+      { key: 'system-monitor', label: '服务监控', icon: <DashboardOutlined />, path: '/admin/system_monitor', permission: 'monitor:server:view' },
       { key: 'online-users', label: '在线用户', icon: <LogoutOutlined />, path: '/admin/online_users', permission: 'system:online:list' },
     ],
   },
