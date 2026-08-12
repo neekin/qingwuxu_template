@@ -20,10 +20,10 @@ jobs:
 
       - name: Scan for common Rails security vulnerabilities using static analysis
         run: bin/brakeman --no-pager
-      
+
       - name: Scan for known security vulnerabilities in gems used
         run: bin/bundler-audit
-      
+
   scan_js:
     runs-on: ubuntu-latest
 
@@ -65,19 +65,35 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  # R1/R6 架构红线：双布局严格分离，禁止跨轨引入对方资产
+  architecture-redlines:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: R1 后台 layout 不得引入 importmap / Turbo
+        run: |
+          set -euo pipefail
+          if grep -nE "importmap|turbo|data-turbo|Turbo" app/views/layouts/admin.html.erb; then
+            echo "::error::admin layout 违反 R1：不得引入 importmap/Turbo（Turbo 仅前台 layout）"
+            exit 1
+          fi
+          echo "✅ R1 检查通过：admin layout 无 importmap/Turbo"
+
+      - name: R6 前台 application layout 不得引入 Vite / Inertia 后台 bundle
+        run: |
+          set -euo pipefail
+          if grep -nE "vite|inertia|Vite|Inertia" app/views/layouts/application.html.erb; then
+            echo "::error::前台 application layout 违反 R6：不得引入 Vite/Inertia 后台 bundle（admin bundle 仅后台 layout 加载）"
+            exit 1
+          fi
+          echo "✅ R6 检查通过：前台 application layout 无 Vite/Inertia"
+
   test:
     runs-on: ubuntu-latest
 
-    # services:
-    #  redis:
-    #    image: valkey/valkey:8
-    #    ports:
-    #      - 6379:6379
-    #    options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
-      - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libvips
-
       - name: Checkout code
         uses: actions/checkout@v6
 
@@ -86,45 +102,54 @@ jobs:
         with:
           bundler-cache: true
 
-      - name: Run tests
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Prepare test database
         env:
           RAILS_ENV: test
-          # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-          # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test
+        run: bin/rails db:test:prepare
 
-  system-test:
+      # 后台使用 Vite/Inertia，测试渲染 admin layout 需先构建 test 环境 vite 资产
+      - name: Build Vite test assets
+        env:
+          RAILS_ENV: test
+        run: bin/vite build
+
+      - name: Run minitest
+        env:
+          RAILS_ENV: test
+        run: bin/rails test
+
+  frontend:
     runs-on: ubuntu-latest
 
-    # services:
-    #  redis:
-    #    image: valkey/valkey:8
-    #    ports:
-    #      - 6379:6379
-    #    options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
-      - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libvips
-
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          bundler-cache: true
+          node-version: '22'
+          cache: 'npm'
 
-      - name: Run System Tests
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run check
+
+      - name: Frontend unit tests (vitest)
+        run: npm run test
+
+      - name: Production Vite build
         env:
-          RAILS_ENV: test
-          # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-          # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test:system
-
-      - name: Keep screenshots from failed system tests
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: screenshots
-          path: ${{ github.workspace }}/tmp/screenshots
-          if-no-files-found: ignore
+          RAILS_ENV: production
+        run: bin/vite build
