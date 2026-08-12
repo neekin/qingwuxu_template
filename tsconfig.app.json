@@ -29,5 +29,12 @@
       "~/*": ["./app/javascript/*"]
     }
   },
-  "include": ["app/frontend", "app/javascript"]
+  "include": ["app/frontend", "app/javascript"],
+  "exclude": [
+    "app/frontend/tests",
+    "app/frontend/**/*.test.ts",
+    "app/frontend/**/*.test.tsx",
+    "app/frontend/**/*.spec.ts",
+    "app/frontend/**/*.spec.tsx"
+  ]
 }
