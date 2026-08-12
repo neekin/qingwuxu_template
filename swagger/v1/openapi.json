@@ -1,0 +1,1115 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "青乌序后台 API",
+    "version": "1.0.0",
+    "description": "青乌序（QingWuXu）后台管理系统 RESTful 接口文档。\n\n## 技术说明\n- 架构：Rails 8 单体 + Inertia.js（React 19 + Ant Design）后台 SPA。\n- 鉴权：基于 Cookie 会话（ActionPolicy 服务端判定 RBAC 权限点），**无 Bearer Token**。\n- 响应风格：列表/详情返回 Inertia 页面 props（`X-Inertia: true`）；写操作成功返回 303 重定向由客户端跟随刷新，校验失败返回 422 + `errors` 数组。\n- 权限模型：最小授权单元是「权限点」（如 `system:user:create`），每个端点标注 `x-permission`；超管 `super_admin` 在 `ApplicationPolicy` 短路放行。\n- 数据权限：列表/写操作均过 `policy_scope`（超管全量 / 普通按 `department_id` 过滤），IDOR 防线内置。\n\n## 文档约定\n- 本规范手维护于 `swagger/v1/openapi.json`，由 RSwag 伺服（`/api-docs`）。\n- 仅 dev/test 环境暴露，生产默认不挂载，避免泄露后台接口结构。"
+  },
+  "servers": [
+    { "url": "/", "description": "同源（开发 / 测试环境，文档挂载于 /api-docs）" }
+  ],
+  "tags": [
+    { "name": "认证", "description": "后台登录 / 注册 / 验证码 / 退出" },
+    { "name": "用户管理", "description": "system:user:*" },
+    { "name": "角色管理", "description": "system:role:*（含权限点绑定）" },
+    { "name": "菜单管理", "description": "system:menu:*（树形自引用）" },
+    { "name": "部门管理", "description": "system:dept:*（树形）" },
+    { "name": "字典管理", "description": "system:dict:type:* / system:dict:data:*" },
+    { "name": "在线用户", "description": "system:online:*（会话监控 + 强制下线）" },
+    { "name": "文件管理", "description": "system:file:*（本地磁盘 Active Storage）" },
+    { "name": "个人中心", "description": "user:profile:*（自服务）" },
+    { "name": "系统监控", "description": "monitor:*（只读审计 / 任务 / 服务指标）" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "cookieSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "_session_id",
+        "description": "基于 Cookie 的会话鉴权；服务端通过 ActionPolicy 判定权限点。"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "description": "写操作校验 / 业务失败响应（HTTP 422）。",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "错误信息数组，前端 ModalForm 直接展示。"
+          }
+        },
+        "example": { "errors": ["用户名已被占用", "邮箱格式不正确"] }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "username": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "role": { "type": "string", "description": "角色名（多角色以「、」连接）" },
+          "role_ids": { "type": "array", "items": { "type": "integer" } },
+          "department": { "type": "string", "nullable": true },
+          "department_id": { "type": "integer", "nullable": true },
+          "status": { "type": "string", "enum": ["enabled", "disabled"] },
+          "super_admin": { "type": "boolean" }
+        }
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "code": { "type": "string", "description": "唯一编码，如 super_admin / admin" },
+          "remark": { "type": "string" },
+          "permissionCount": { "type": "integer" },
+          "permission_ids": { "type": "array", "items": { "type": "integer" } },
+          "status": { "type": "string", "enum": ["enabled", "disabled"] }
+        }
+      },
+      "Menu": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "route": { "type": "string", "nullable": true },
+          "permission_code": { "type": "string", "nullable": true },
+          "menu_type": { "type": "string", "enum": ["catalog", "menu", "button"] },
+          "status": { "type": "string", "enum": ["visible", "hidden"] },
+          "icon": { "type": "string", "nullable": true },
+          "component": { "type": "string", "nullable": true },
+          "parent_id": { "type": "integer", "nullable": true },
+          "parent_name": { "type": "string", "nullable": true },
+          "sort": { "type": "integer" }
+        }
+      },
+      "Department": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "code": { "type": "string" },
+          "name": { "type": "string" },
+          "parent_id": { "type": "integer", "nullable": true },
+          "parent_name": { "type": "string", "nullable": true },
+          "leader": { "type": "string", "nullable": true },
+          "sort": { "type": "integer" },
+          "status": { "type": "string", "enum": ["enabled", "disabled"] },
+          "remark": { "type": "string", "nullable": true }
+        }
+      },
+      "DictionaryType": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "code": { "type": "string", "description": "唯一编码，如 sys_user_sex" },
+          "name": { "type": "string" },
+          "status": { "type": "string", "enum": ["enabled", "disabled"] },
+          "remark": { "type": "string", "nullable": true },
+          "sort": { "type": "integer" }
+        }
+      },
+      "DictionaryData": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "dict_type": { "type": "string", "description": "关联字典类型 code" },
+          "label": { "type": "string" },
+          "value": { "type": "string" },
+          "status": { "type": "string", "enum": ["enabled", "disabled"] },
+          "remark": { "type": "string", "nullable": true },
+          "sort": { "type": "integer" }
+        }
+      },
+      "UploadedFile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "filename": { "type": "string" },
+          "content_type": { "type": "string" },
+          "byte_size": { "type": "integer" },
+          "created_at": { "type": "string" },
+          "preview_url": { "type": "string", "nullable": true },
+          "download_url": { "type": "string", "nullable": true }
+        }
+      },
+      "OnlineUser": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "description": "LoginSession id" },
+          "username": { "type": "string" },
+          "phone": { "type": "string" },
+          "department_name": { "type": "string", "nullable": true },
+          "ip": { "type": "string" },
+          "created_at": { "type": "string" },
+          "last_seen_at": { "type": "string", "nullable": true }
+        }
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "username": { "type": "string" },
+          "nickname": { "type": "string", "nullable": true },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "dept": { "type": "string", "nullable": true },
+          "role": { "type": "string" },
+          "avatar_url": { "type": "string", "nullable": true },
+          "created_at": { "type": "string" }
+        }
+      }
+    },
+    "responses": {
+      "Forbidden": {
+        "description": "权限不足（ActionPolicy 拒绝，无对应权限点）。",
+        "content": {
+          "application/json": {
+            "schema": { "type": "object", "properties": { "error": { "type": "string" } } },
+            "example": { "error": "无权限执行此操作" }
+          }
+        }
+      },
+      "Unprocessable": {
+        "description": "校验 / 业务失败（Inertia 返回 422 + errors）。",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+        }
+      }
+    }
+  },
+  "security": [ { "cookieSession": [] } ],
+  "paths": {
+    "/admin/login": {
+      "post": {
+        "tags": ["认证"],
+        "summary": "后台登录（密码 / 手机验证码）",
+        "x-permission": "（公开，无需权限点）",
+        "description": "按 `login_type` 分流：password=账号+密码；sms=手机号+验证码。成功后建立会话并重定向到仪表盘。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "description": "密码登录",
+                    "properties": {
+                      "login_type": { "type": "string", "enum": ["password"] },
+                      "account": { "type": "string", "description": "用户名 / 手机 / 邮箱" },
+                      "password": { "type": "string" }
+                    },
+                    "required": ["login_type", "account", "password"]
+                  },
+                  {
+                    "type": "object",
+                    "description": "手机验证码登录",
+                    "properties": {
+                      "login_type": { "type": "string", "enum": ["sms"] },
+                      "phone": { "type": "string", "pattern": "^1[3-9]\\d{9}$" },
+                      "code": { "type": "string" }
+                    },
+                    "required": ["login_type", "phone", "code"]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "登录成功，重定向到 /admin（Inertia 跟随）。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "200": { "description": "登录失败，Inertia 回显 error（账号/密码错误、账号禁用等）。" }
+        }
+      }
+    },
+    "/admin/login/send_code": {
+      "post": {
+        "tags": ["认证"],
+        "summary": "发送登录 / 注册验证码",
+        "x-permission": "（公开，无需权限点）",
+        "description": "向手机（sms）或邮箱（email）发送验证码。development 环境响应体额外返回 `dev_code` 便于联调；其余环境不泄露。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "receiver": { "type": "string", "description": "手机号或邮箱" },
+                  "channel": { "type": "string", "enum": ["sms", "email"] },
+                  "purpose": { "type": "string", "enum": ["login", "register"], "default": "login" }
+                },
+                "required": ["receiver", "channel"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "发送成功。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "dev_code": { "type": "string", "description": "仅 development 返回" }
+                  }
+                },
+                "example": { "ok": true, "dev_code": "123456" }
+              }
+            }
+          },
+          "422": { "description": "账号格式不正确。" },
+          "429": { "description": "发送频率超限（RateLimit）。" }
+        }
+      }
+    },
+    "/admin/register": {
+      "post": {
+        "tags": ["认证"],
+        "summary": "后台注册（手机为主）",
+        "x-permission": "（公开，无需权限点）",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": { "type": "string", "pattern": "^1[3-9]\\d{9}$" },
+                  "code": { "type": "string", "description": "短信验证码" },
+                  "password": { "type": "string", "minLength": 6 },
+                  "username": { "type": "string", "nullable": true },
+                  "email": { "type": "string", "nullable": true }
+                },
+                "required": ["phone", "code", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "注册成功并自动登录，重定向到 /admin。" },
+          "422": { "description": "校验失败（手机号格式 / 已注册 / 验证码错误 / 密码过短）。" }
+        }
+      }
+    },
+    "/admin/logout": {
+      "delete": {
+        "tags": ["认证"],
+        "summary": "退出登录",
+        "x-permission": "（登录态即可）",
+        "description": "销毁当前 LoginSession 并重置会话，重定向到登录页。",
+        "responses": {
+          "303": { "description": "退出成功，重定向到 /admin/login。" }
+        }
+      }
+    },
+
+    "/admin/users": {
+      "get": {
+        "tags": ["用户管理"],
+        "summary": "用户列表",
+        "x-permission": "system:user:list",
+        "responses": {
+          "200": {
+            "description": "Inertia 页面 props：users[] + 表单选项 all_roles / all_departments。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": { "type": "array", "items": { "$ref": "#/components/schemas/User" } },
+                    "all_roles": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "integer" }, "name": { "type": "string" } } } },
+                    "all_departments": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "integer" }, "name": { "type": "string" } } } }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["用户管理"],
+        "summary": "新建用户",
+        "x-permission": "system:user:create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "裸值（无 user 包裹）；role_ids / department_id 可选。",
+                "properties": {
+                  "username": { "type": "string" },
+                  "email": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "password": { "type": "string", "minLength": 6 },
+                  "status": { "type": "string", "enum": ["enabled", "disabled"] },
+                  "department_id": { "type": "integer", "nullable": true },
+                  "role_ids": { "type": "array", "items": { "type": "integer" } }
+                },
+                "required": ["username", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "创建成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/users/{id}": {
+      "put": {
+        "tags": ["用户管理"],
+        "summary": "更新用户",
+        "x-permission": "system:user:edit",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "password 留空表示不改密码。",
+                "properties": {
+                  "username": { "type": "string" },
+                  "email": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "password": { "type": "string", "nullable": true },
+                  "status": { "type": "string", "enum": ["enabled", "disabled"] },
+                  "department_id": { "type": "integer", "nullable": true },
+                  "role_ids": { "type": "array", "items": { "type": "integer" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "更新成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "delete": {
+        "tags": ["用户管理"],
+        "summary": "删除用户",
+        "x-permission": "system:user:delete",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "description": "禁止删除自己；禁止删除最后一个 super_admin。",
+        "responses": {
+          "303": { "description": "删除成功，重定向刷新列表。" },
+          "422": { "description": "业务拦截（不能删除当前用户 / 至少保留一个超管），errors 说明。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    "/admin/roles": {
+      "get": {
+        "tags": ["角色管理"],
+        "summary": "角色列表",
+        "x-permission": "system:role:list",
+        "responses": {
+          "200": {
+            "description": "Inertia props：roles[] + all_permissions[]（权限点多选选项）。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "roles": { "type": "array", "items": { "$ref": "#/components/schemas/Role" } },
+                    "all_permissions": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "integer" }, "code": { "type": "string" }, "name": { "type": "string" } } } }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["角色管理"],
+        "summary": "新建角色并绑定权限点",
+        "x-permission": "system:role:create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "code": { "type": "string", "description": "唯一编码" },
+                  "status": { "type": "string", "enum": ["enabled", "disabled"] },
+                  "description": { "type": "string" },
+                  "permission_ids": { "type": "array", "items": { "type": "integer" } }
+                },
+                "required": ["name", "code"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "创建成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/roles/{id}": {
+      "put": {
+        "tags": ["角色管理"],
+        "summary": "更新角色与权限点",
+        "x-permission": "system:role:edit",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "code": { "type": "string" },
+                  "status": { "type": "string", "enum": ["enabled", "disabled"] },
+                  "description": { "type": "string" },
+                  "permission_ids": { "type": "array", "items": { "type": "integer" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "更新成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "delete": {
+        "tags": ["角色管理"],
+        "summary": "删除角色",
+        "x-permission": "system:role:delete",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "description": "super_admin 角色不可删。",
+        "responses": {
+          "303": { "description": "删除成功，重定向刷新列表。" },
+          "422": { "description": "业务拦截（超级管理员角色不可删除）。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    "/admin/menus": {
+      "get": {
+        "tags": ["菜单管理"],
+        "summary": "菜单树（平铺）",
+        "x-permission": "system:menu:list",
+        "responses": {
+          "200": {
+            "description": "Inertia props：menus[]（含 parent_name）+ all_menus[]（父级选项，仅 catalog/menu）。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "menus": { "type": "array", "items": { "$ref": "#/components/schemas/Menu" } }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["菜单管理"],
+        "summary": "新建菜单",
+        "x-permission": "system:menu:create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "route": { "type": "string", "nullable": true },
+                  "permission_code": { "type": "string", "nullable": true },
+                  "menu_type": { "type": "string", "enum": ["catalog", "menu", "button"] },
+                  "status": { "type": "string", "enum": ["visible", "hidden"] },
+                  "icon": { "type": "string", "nullable": true },
+                  "component": { "type": "string", "nullable": true },
+                  "parent_id": { "type": "integer", "nullable": true },
+                  "sort": { "type": "integer" }
+                },
+                "required": ["name", "menu_type"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "创建成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/menus/{id}": {
+      "put": {
+        "tags": ["菜单管理"],
+        "summary": "更新菜单",
+        "x-permission": "system:menu:edit",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "route": { "type": "string", "nullable": true },
+                  "permission_code": { "type": "string", "nullable": true },
+                  "menu_type": { "type": "string", "enum": ["catalog", "menu", "button"] },
+                  "status": { "type": "string", "enum": ["visible", "hidden"] },
+                  "icon": { "type": "string", "nullable": true },
+                  "component": { "type": "string", "nullable": true },
+                  "parent_id": { "type": "integer", "nullable": true },
+                  "sort": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "更新成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "delete": {
+        "tags": ["菜单管理"],
+        "summary": "删除菜单",
+        "x-permission": "system:menu:delete",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "description": "含子项的菜单禁止删除（避免悬空 parent_id）。",
+        "responses": {
+          "303": { "description": "删除成功，重定向刷新列表。" },
+          "422": { "description": "业务拦截（请先删除该菜单下的子项）。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    "/admin/departments": {
+      "get": {
+        "tags": ["部门管理"],
+        "summary": "部门列表（平铺，可递归成树）",
+        "x-permission": "system:dept:list",
+        "responses": {
+          "200": {
+            "description": "Inertia props：departments[]（含 parent_name）。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "departments": { "type": "array", "items": { "$ref": "#/components/schemas/Department" } }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["部门管理"],
+        "summary": "新建部门",
+        "x-permission": "system:dept:create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": { "type": "string" },
+                  "name": { "type": "string" },
+                  "parent_id": { "type": "integer", "nullable": true },
+                  "leader": { "type": "string", "nullable": true },
+                  "sort": { "type": "integer" },
+                  "status": { "type": "string", "enum": ["enabled", "disabled"] },
+                  "remark": { "type": "string", "nullable": true }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "创建成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/departments/{id}": {
+      "put": {
+        "tags": ["部门管理"],
+        "summary": "更新部门",
+        "x-permission": "system:dept:edit",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": { "type": "string" },
+                  "name": { "type": "string" },
+                  "parent_id": { "type": "integer", "nullable": true },
+                  "leader": { "type": "string", "nullable": true },
+                  "sort": { "type": "integer" },
+                  "status": { "type": "string", "enum": ["enabled", "disabled"] },
+                  "remark": { "type": "string", "nullable": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "更新成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "delete": {
+        "tags": ["部门管理"],
+        "summary": "删除部门",
+        "x-permission": "system:dept:delete",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "303": { "description": "删除成功，重定向刷新列表。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    "/admin/dictionary_types": {
+      "get": {
+        "tags": ["字典管理"],
+        "summary": "字典类型列表",
+        "x-permission": "system:dict:type:list",
+        "responses": {
+          "200": {
+            "description": "Inertia props：dictionary_types[]。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "dictionary_types": { "type": "array", "items": { "$ref": "#/components/schemas/DictionaryType" } }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["字典管理"],
+        "summary": "新建字典类型",
+        "x-permission": "system:dict:type:create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": { "type": "string", "description": "唯一编码，如 sys_user_sex" },
+                  "name": { "type": "string" },
+                  "status": { "type": "string", "enum": ["enabled", "disabled"] },
+                  "remark": { "type": "string", "nullable": true },
+                  "sort": { "type": "integer" }
+                },
+                "required": ["code", "name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "创建成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/dictionary_types/{id}": {
+      "put": {
+        "tags": ["字典管理"],
+        "summary": "更新字典类型",
+        "x-permission": "system:dict:type:edit",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": { "type": "string" },
+                  "name": { "type": "string" },
+                  "status": { "type": "string", "enum": ["enabled", "disabled"] },
+                  "remark": { "type": "string", "nullable": true },
+                  "sort": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "更新成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "delete": {
+        "tags": ["字典管理"],
+        "summary": "删除字典类型",
+        "x-permission": "system:dict:type:delete",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "303": { "description": "删除成功，重定向刷新列表。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    "/admin/dictionary_data": {
+      "get": {
+        "tags": ["字典管理"],
+        "summary": "字典数据项列表（按 dict_type 过滤）",
+        "x-permission": "system:dict:data:list",
+        "parameters": [ { "name": "dict_type", "in": "query", "required": false, "schema": { "type": "string" }, "description": "字典类型 code；缺省返回全部。" } ],
+        "responses": {
+          "200": {
+            "description": "Inertia props：dict_type + dictionary_data[]。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "dict_type": { "type": "string", "nullable": true },
+                    "dictionary_data": { "type": "array", "items": { "$ref": "#/components/schemas/DictionaryData" } }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["字典管理"],
+        "summary": "新建字典数据项",
+        "x-permission": "system:dict:data:create",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dict_type": { "type": "string" },
+                  "label": { "type": "string" },
+                  "value": { "type": "string" },
+                  "status": { "type": "string", "enum": ["enabled", "disabled"] },
+                  "remark": { "type": "string", "nullable": true },
+                  "sort": { "type": "integer" }
+                },
+                "required": ["dict_type", "label", "value"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "创建成功，重定向刷新列表（保留 dict_type 过滤）。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/dictionary_data/{id}": {
+      "put": {
+        "tags": ["字典管理"],
+        "summary": "更新字典数据项",
+        "x-permission": "system:dict:data:edit",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dict_type": { "type": "string" },
+                  "label": { "type": "string" },
+                  "value": { "type": "string" },
+                  "status": { "type": "string", "enum": ["enabled", "disabled"] },
+                  "remark": { "type": "string", "nullable": true },
+                  "sort": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "更新成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "delete": {
+        "tags": ["字典管理"],
+        "summary": "删除字典数据项",
+        "x-permission": "system:dict:data:delete",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "303": { "description": "删除成功，重定向刷新列表。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    "/admin/online_users": {
+      "get": {
+        "tags": ["在线用户"],
+        "summary": "在线会话列表",
+        "x-permission": "system:online:list",
+        "responses": {
+          "200": {
+            "description": "Inertia props：online_users[]。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "online_users": { "type": "array", "items": { "$ref": "#/components/schemas/OnlineUser" } }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/online_users/{id}": {
+      "delete": {
+        "tags": ["在线用户"],
+        "summary": "强制下线",
+        "x-permission": "system:online:force",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "description": "删除 LoginSession；目标用户下次请求令牌校验失败即被弹回登录页。禁止强制下线自己的当前会话。",
+        "responses": {
+          "303": { "description": "强制下线成功，重定向刷新列表。" },
+          "422": { "description": "业务拦截（不能强制下线当前会话）。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    "/admin/files": {
+      "get": {
+        "tags": ["文件管理"],
+        "summary": "文件列表",
+        "x-permission": "system:file:list",
+        "responses": {
+          "200": {
+            "description": "Inertia props：files[]（含预览 / 下载 URL）。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "files": { "type": "array", "items": { "$ref": "#/components/schemas/UploadedFile" } }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "post": {
+        "tags": ["文件管理"],
+        "summary": "上传文件",
+        "x-permission": "system:file:upload",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary", "description": "待上传文件（Active Storage 附件）" }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "上传成功，重定向刷新列表。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/files/{id}": {
+      "delete": {
+        "tags": ["文件管理"],
+        "summary": "删除文件",
+        "x-permission": "system:file:delete",
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "description": "purge blob + 删除宿主记录。",
+        "responses": {
+          "303": { "description": "删除成功，重定向刷新列表。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+
+    "/admin/profile": {
+      "get": {
+        "tags": ["个人中心"],
+        "summary": "个人资料",
+        "x-permission": "user:profile:view",
+        "responses": {
+          "200": {
+            "description": "Inertia props：user{}（含 avatar_url）。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": { "$ref": "#/components/schemas/Profile" }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "put": {
+        "tags": ["个人中心"],
+        "summary": "更新个人资料",
+        "x-permission": "user:profile:view",
+        "description": "自服务：登录态即可；可更新 nickname / email / phone / avatar。",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nickname": { "type": "string", "nullable": true },
+                  "email": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "avatar": { "type": "string", "format": "binary", "nullable": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "更新成功，重定向刷新。" },
+          "422": { "$ref": "#/components/responses/Unprocessable" }
+        }
+      }
+    },
+    "/admin/profile/change_password": {
+      "put": {
+        "tags": ["个人中心"],
+        "summary": "修改密码",
+        "x-permission": "user:profile:view",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "old_password": { "type": "string" },
+                  "new_password": { "type": "string", "minLength": 6 }
+                },
+                "required": ["old_password", "new_password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "303": { "description": "修改成功，重定向刷新。" },
+          "422": { "description": "业务校验失败（原密码不正确 / 新密码至少 6 位）。" }
+        }
+      }
+    },
+
+    "/admin/operation_logs": {
+      "get": {
+        "tags": ["系统监控"],
+        "summary": "操作日志（只读）",
+        "x-permission": "monitor:operlog:list",
+        "responses": {
+          "200": { "description": "Inertia props：operation_logs[]（由 BaseController 自动记录写操作）。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/login_logs": {
+      "get": {
+        "tags": ["系统监控"],
+        "summary": "登录日志（只读）",
+        "x-permission": "monitor:loginlog:list",
+        "responses": {
+          "200": { "description": "Inertia props：login_logs[]（由 SessionsController 登录时记录）。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/solid_queue_jobs": {
+      "get": {
+        "tags": ["系统监控"],
+        "summary": "定时任务监控（只读）",
+        "x-permission": "monitor:job:list",
+        "responses": {
+          "200": { "description": "Inertia props：近期任务列表 + 统计（Solid Queue）。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/admin/system_monitor": {
+      "get": {
+        "tags": ["系统监控"],
+        "summary": "服务监控总览（只读）",
+        "x-permission": "monitor:server:view",
+        "responses": {
+          "200": { "description": "Inertia props：Queue / Cache / Cable + 应用指标总览。" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    }
+  }
+}

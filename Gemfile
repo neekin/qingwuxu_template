@@ -65,6 +65,12 @@ group :test do
   gem "selenium-webdriver"
 end
 
+group :development, :test do
+  # API 文档（RSwag 家族轻量版：rswag-ui + rswag-api，不引 RSpec；OpenAPI 规范手维护）
+  gem "rswag-ui"
+  gem "rswag-api"
+end
+
 gem "inertia_rails", "~> 3.22"
 
 gem "vite_rails", "~> 3.11"

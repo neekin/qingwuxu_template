@@ -45,6 +45,12 @@ Rails.application.routes.draw do
     get 'register', to: 'sessions#register_page', as: :register
     post 'register', to: 'sessions#register'
   end
+
+  # API 文档（RSwag）：仅 dev/test 暴露，避免生产默认暴露后台接口结构。
+  if Rails.env.development? || Rails.env.test?
+    mount Rswag::Api::Engine => "/api-docs"
+    mount Rswag::Ui::Engine => "/api-docs"
+  end
   
   
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
