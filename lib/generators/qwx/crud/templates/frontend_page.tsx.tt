@@ -1,0 +1,93 @@
+import { Head, usePage } from '@inertiajs/react'
+<% if attributes.any? { |a| a.type == :boolean } -%>
+import { Tag } from 'antd'
+<% end -%>
+import AdminLayout from '../../../layouts/AdminLayout'
+import AdminPageContainer from '../../../components/AdminPageContainer'
+import ProListPage from '../../../components/ProListPage'
+import { <%= used_pro_form_components.join(', ') %> } from '@ant-design/pro-components'
+import type { ProColumns } from '@ant-design/pro-components'
+
+type <%= class_name %> = {
+  id: number
+<% attributes.reject(&:reference?).each do |attr| -%>
+  <%= attr.name %>: <%= ts_type(attr) %>
+<% end -%>
+<% if with_department? -%>
+  department_id: number | null
+  department: string | null
+<% end -%>
+<% reference_attributes.each do |attr| -%>
+  <%= attr.name %>_id: number | null
+  <%= attr.name %>_name: string | null
+<% end -%>
+  created_at: string
+}
+
+const toOptions = (arr?: { id: number; name: string }[]) =>
+  (arr || []).map((o) => ({ value: o.id, label: o.name }))
+
+const columns: ProColumns<<%= class_name %>>[] = [
+<% attributes.reject(&:reference?).each do |attr| -%>
+  { title: '<%= human(attr.name) %>', dataIndex: '<%= attr.name %>', search: true<% if attr.type == :boolean %>, render: (_, r) => <Tag color={r.<%= attr.name %> ? 'success' : 'default'}>{r.<%= attr.name %> ? '是' : '否'}</Tag><% end %> },
+<% end -%>
+<% reference_attributes.each do |attr| -%>
+  { title: '<%= human(attr.name) %>', dataIndex: '<%= attr.name %>_name', search: true },
+<% end -%>
+  { title: '创建时间', dataIndex: 'created_at' },
+]
+
+export default function <%= class_name %>sPage() {
+  const page = usePage()
+  const records = (page.props as Record<string, unknown>).<%= table_name %> as <%= class_name %>[]
+
+  // 表单字段在组件内定义，可访问 page.props 中的 all_<ref>s 选项源。
+  const formItems = (_record?: <%= class_name %>) => (
+    <>
+<% attributes.reject(&:reference?).each do |attr| -%>
+<% if attr.type == :text -%>
+    <ProFormTextArea name="<%= attr.name %>" label="<%= human(attr.name) %>" />
+<% elsif attr.type == :boolean -%>
+    <ProFormSwitch name="<%= attr.name %>" label="<%= human(attr.name) %>" />
+<% elsif attr.type == :integer || attr.type == :decimal || attr.type == :float -%>
+    <ProFormDigit name="<%= attr.name %>" label="<%= human(attr.name) %>" />
+<% elsif attr.type == :datetime || attr.type == :date -%>
+    <ProFormDateTimePicker name="<%= attr.name %>" label="<%= human(attr.name) %>" />
+<% else -%>
+    <ProFormText name="<%= attr.name %>" label="<%= human(attr.name) %>" rules={[{ required: true, message: '请输入<%= human(attr.name) %>' }]} />
+<% end -%>
+<% end -%>
+<% reference_attributes.each do |attr| -%>
+    <ProFormSelect
+      name="<%= attr.name %>_id"
+      label="<%= human(attr.name) %>"
+      options={toOptions((page.props as Record<string, unknown>).all_<%= attr.name %>s as { id: number; name: string }[])}
+      fieldProps={{ allowClear: true }}
+    />
+<% end -%>
+<% if with_department? -%>
+    <ProFormSelect
+      name="department_id"
+      label="部门"
+      options={toOptions((page.props as Record<string, unknown>).all_departments as { id: number; name: string }[])}
+      fieldProps={{ allowClear: true }}
+    />
+<% end -%>
+    </>
+  )
+
+  return (
+    <AdminLayout>
+      <Head title="<%= human(class_name) %>管理" />
+      <AdminPageContainer title="<%= human(class_name) %>管理">
+        <ProListPage<<%= class_name %>>
+          rowKey="id"
+          columns={columns}
+          data={records}
+          formItemsFor={formItems}
+          apiBase="/admin/<%= table_name %>"
+        />
+      </AdminPageContainer>
+    </AdminLayout>
+  )
+}

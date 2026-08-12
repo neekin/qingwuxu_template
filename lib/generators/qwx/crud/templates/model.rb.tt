@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+class <%= class_name %> < ApplicationRecord
+<% if with_department? -%>
+  belongs_to :department, optional: true
+<% end -%>
+<% reference_attributes.each do |attr| -%>
+  belongs_to :<%= attr.name %>, optional: true
+<% end -%>
+end

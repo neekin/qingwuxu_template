@@ -29,7 +29,7 @@
       框架说明 · 最后更新 2026-08-12
     </span>
     <h1 class="mt-6 max-w-3xl text-4xl font-bold leading-tight tracking-tight lg:text-5xl">
-      青乌序框架：结构、用法与代码生成器蓝图
+      青乌序框架：结构、用法与代码生成器
     </h1>
     <p class="mt-5 max-w-2xl text-lg text-white/80">
       Rails 8 单体二开框架，对标若依。前台 Hotwire 利 SEO，后台 Inertia + React + Ant Design Pro；
@@ -303,16 +303,16 @@ RAILS_ENV=production bin/vite build</code></pre>
   </div>
 </section>
 
-<%# ============ 代码生成器（规划中） ============ %>
+<%# ============ 代码生成器（已实现） ============ %>
 <section id="generator" class="mx-auto max-w-6xl px-6 py-20">
   <div class="max-w-2xl">
     <h2 class="text-3xl font-bold tracking-tight text-ink-900">代码生成器</h2>
     <p class="mt-3 text-ink-700">schema 一推，满盘落子成局——后台 CRUD 与前后台模板一条龙产出。</p>
   </div>
 
-  <div class="mt-8 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent-600">
-    <span class="h-2 w-2 rounded-full bg-accent"></span>
-    状态：🟡 规划中（P2）· 尚未实现 · 本页将随其落地同步更新为真实用法
+  <div class="mt-8 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+    <span class="h-2 w-2 rounded-full bg-primary"></span>
+    状态：🟢 已实现（P2）· 落地于 qwx:crud 生成器 · 可直接提交
   </div>
 
   <div class="mt-10 grid gap-6 lg:grid-cols-2">
@@ -338,7 +338,16 @@ RAILS_ENV=production bin/vite build</code></pre>
         <li class="flex gap-2"><span class="text-primary">✓</span> 字段映射：字符串→输入框、枚举→下拉、关联→选择、时间→日期</li>
         <li class="flex gap-2"><span class="text-primary">✓</span> 生成即过 <code>bin/rails test</code> + <code>npm run check</code>，可直接提交</li>
       </ul>
-      <p class="mt-5 rounded bg-ink-50 p-3 text-sm text-ink-600">跟踪：见项目已知缺口清单 #6（P2 远期）。落地后本页「代码生成器」小节将替换为真实命令与示例。</p>
+      <p class="mt-5 text-sm text-ink-700">使用方式（一行生成全栈 CRUD 脚手架）：</p>
+      <pre class="mt-2 overflow-x-auto rounded bg-ink-900 p-4 text-xs leading-relaxed text-ink-50"><code>bin/rails g qwx:crud Article title:string body:text published:boolean category:references
+# 产出：迁移 + 模型 + Admin 控制器(写路径) + ActionPolicy(三态权限点) + Inertia 页面 + 三态控制器测试
+# routes / seeds / adminMenu 仅打印片段，由你粘贴（生成器不自动改既有文件）</code></pre>
+      <ul class="mt-3 space-y-1.5 text-sm text-ink-700">
+        <li class="flex gap-2"><span class="text-primary">✓</span> 字段映射：string→ProFormText、text→ProFormTextArea、boolean→ProFormSwitch、integer/decimal/float→ProFormDigit、datetime/date→ProFormDateTimePicker、references→ProFormSelect（值走 &lt;name&gt;_id，选项源 all_&lt;name&gt;s）</li>
+        <li class="flex gap-2"><span class="text-primary">✓</span> 默认带 <code>department_id</code> 数据权限列（<code>--no-department</code> 关闭）</li>
+        <li class="flex gap-2"><span class="text-primary">✓</span> 引用选项标签列自动适配（name / username / id），如 <code>user:references</code> 取 <code>username</code></li>
+        <li class="flex gap-2"><span class="text-primary">✓</span> 生成的测试遵循三态范式，<code>bin/rails test</code> + <code>npm run check</code> 直接绿</li>
+      </ul>
     </div>
   </div>
 </section>

@@ -1,0 +1,17 @@
+class Create<%= class_name.pluralize %> < ActiveRecord::Migration[8.1]
+  def change
+    create_table :<%= table_name %> do |t|
+<% attributes.each do |attr| -%>
+<% if attr.reference? -%>
+      t.references :<%= attr.name %>, null: true, foreign_key: true
+<% else -%>
+      t.<%= attr.type %> :<%= attr.name %>
+<% end -%>
+<% end -%>
+<% if with_department? -%>
+      t.references :department, null: true, foreign_key: true
+<% end -%>
+      t.timestamps
+    end
+  end
+end

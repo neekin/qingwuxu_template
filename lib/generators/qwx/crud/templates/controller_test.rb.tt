@@ -1,0 +1,66 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+module Admin
+  # <%= class_name %> 管理写路径三态测试（超管 success / 无权限 forbidden / 未登录 redirect）。
+  class <%= class_name %>sControllerTest < ActionDispatch::IntegrationTest
+    setup do
+      @super = User.create!(
+        username: "dg_super_#{SecureRandom.hex(3)}",
+        phone: "135#{SecureRandom.rand(10**8).to_s.rjust(8, '0')}",
+        password: "secret123",
+        super_admin: true
+      )
+      @guest = User.create!(
+        username: "dg_guest_#{SecureRandom.hex(3)}",
+        phone: "136#{SecureRandom.rand(10**8).to_s.rjust(8, '0')}",
+        password: "secret123"
+      )
+      @target = <%= class_name %>.create!(<%= sample_params_inline %>)
+    end
+
+    test "未登录访问 <%= table_name %> 跳登录" do
+      get admin_<%= table_name %>_path
+      assert_redirected_to admin_login_path
+    end
+
+    test "超管 GET index 放行" do
+      login_as(@super)
+      get admin_<%= table_name %>_path
+      assert_response :success
+    end
+
+    test "无权限用户 GET index 被拦(403)" do
+      login_as(@guest)
+      get admin_<%= table_name %>_path
+      assert_response :forbidden
+    end
+
+    test "超管 POST create 成功" do
+      login_as(@super)
+      assert_difference -> { <%= class_name %>.count }, 1 do
+        post admin_<%= table_name %>_path, params: {
+<%= sample_params %>
+        }, headers: { "X-CSRF-Token" => csrf_token }
+      end
+      assert_redirected_to admin_<%= table_name %>_path
+    end
+
+    test "超管 PUT update 成功" do
+      login_as(@super)
+      put admin_<%= file_name %>_path(@target), params: {
+<%= sample_params %>
+      }, headers: { "X-CSRF-Token" => csrf_token }
+      assert_redirected_to admin_<%= table_name %>_path
+    end
+
+    test "超管 DELETE destroy 成功" do
+      login_as(@super)
+      assert_difference -> { <%= class_name %>.count }, -1 do
+        delete admin_<%= file_name %>_path(@target), headers: { "X-CSRF-Token" => csrf_token }
+      end
+      assert_redirected_to admin_<%= table_name %>_path
+    end
+  end
+end

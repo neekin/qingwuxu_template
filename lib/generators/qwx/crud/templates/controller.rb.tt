@@ -1,0 +1,83 @@
+# frozen_string_literal: true
+
+module Admin
+  # <%= class_name %> 管理（代码生成器产出，遵循真实写路径范式）。
+  class <%= class_name %>sController < BaseController
+    def index
+      authorize! <%= class_name %>, to: :index?
+      render inertia: "admin/<%= table_name %>/index", props: <%= file_name %>_props
+    end
+
+    def create
+      authorize! <%= class_name %>, to: :create?
+      record = <%= class_name %>.new(<%= file_name %>_params)
+      if record.save
+        redirect_to admin_<%= table_name %>_path
+      else
+        render inertia: "admin/<%= table_name %>/index",
+               props: <%= file_name %>_props.merge(errors: record.errors.full_messages),
+               status: :unprocessable_entity
+      end
+    end
+
+    def update
+      authorize! <%= class_name %>, to: :update?
+      record = scoped.find(params[:id])
+      if record.update(<%= file_name %>_params)
+        redirect_to admin_<%= table_name %>_path
+      else
+        render inertia: "admin/<%= table_name %>/index",
+               props: <%= file_name %>_props.merge(errors: record.errors.full_messages),
+               status: :unprocessable_entity
+      end
+    end
+
+    def destroy
+      authorize! <%= class_name %>, to: :destroy?
+      record = scoped.find(params[:id])
+      record.destroy
+      redirect_to admin_<%= table_name %>_path
+    end
+
+    private
+
+    # IDOR 防线：列表/写操作都过 policy_scope（超管全量 / 普通按部门过滤）。
+    def scoped
+      policy_scope(<%= class_name %>.all, with: <%= class_name %>Policy)
+    end
+
+    def <%= file_name %>_props
+      records = scoped.order(created_at: :desc)
+      {
+        <%= table_name %>: records.map do |r|
+          {
+            id: r.id,
+<% attributes.reject(&:reference?).each do |attr| -%>
+            <%= attr.name %>: r.<%= attr.name %>,
+<% end -%>
+<% if with_department? -%>
+            department_id: r.department_id,
+            department: r.department&.name,
+<% end -%>
+<% reference_attributes.each do |attr| -%>
+            <%= attr.name %>_id: r.<%= attr.name %>_id,
+            <%= attr.name %>_name: r.<%= attr.name %>&.<%= reference_label_column(attr) %>,
+<% end -%>
+            created_at: r.created_at.strftime("%Y-%m-%d %H:%M")
+          }
+        end,
+<% if with_department? -%>
+        all_departments: Department.where(status: :enabled).order(:sort).map { |d| { id: d.id, name: d.name } },
+<% end -%>
+<% reference_attributes.each do |attr| -%>
+        all_<%= attr.name %>s: <%= attr.name.camelize %>.order(:id).map { |o| { id: o.id, name: o.<%= reference_label_column(attr) %> } },
+<% end -%>
+      }
+    end
+
+    # 前端 ProListPage 发裸 values，用 permit 直接收。
+    def <%= file_name %>_params
+      params.permit(<%= permitted_params %>)
+    end
+  end
+end

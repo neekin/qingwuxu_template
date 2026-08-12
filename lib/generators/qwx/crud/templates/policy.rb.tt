@@ -1,0 +1,22 @@
+# frozen_string_literal: true
+
+class <%= class_name %>Policy < ApplicationPolicy
+  def index?
+    user.has_permission?('<%= permission_prefix %>:list')
+  end
+
+  def create?
+    user.has_permission?('<%= permission_prefix %>:create')
+  end
+
+  def update?
+    user.has_permission?('<%= permission_prefix %>:edit')
+  end
+
+  def destroy?
+    user.has_permission?('<%= permission_prefix %>:delete')
+  end
+
+  # 数据权限复用 ApplicationPolicy#scope_for（超管直通 / 普通按 department_id 过滤）。
+  # 本资源带 department_id 时自动生效；不带则基类的全量放行。
+end

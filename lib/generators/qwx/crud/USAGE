@@ -1,0 +1,13 @@
+Description:
+    一键产出与手写范式一致的全栈 CRUD 脚手架：迁移 + 模型 + Admin 控制器
+    （authorize! + policy_scope 写路径）+ ActionPolicy（三态权限点）+ Inertia
+    页面（ProListPage）+ 三态控制器测试。路由 / seed / 菜单仅打印片段，手工粘贴。
+
+Example:
+    bin/rails g qwx:crud Article title:string body:text published:boolean category:references
+
+    # 不带数据权限列
+    bin/rails g qwx:crud Article title:string --no-department
+
+Options:
+    [--department]  # 生成数据权限列 department_id（默认开启）
